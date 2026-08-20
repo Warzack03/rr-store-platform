@@ -7,5 +7,649 @@ datasource db {
   provider = "mysql"
 }
 
-// Phase 1 intentionally contains no ecommerce models.
-// The complete, reviewed data model belongs to Phase 2.
+enum ProductType {
+  SIMPLE
+  BUNDLE
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DropStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CustomizationType {
+  NAME
+  NUMBER
+}
+
+enum BundleComponentRole {
+  SHIRT
+  SHORTS
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+enum CheckoutAttemptStatus {
+  CREATED
+  REDIRECTED
+  PAID
+  EXPIRED
+  CANCELLED
+  FAILED
+}
+
+enum OrderStatus {
+  RECEIVED
+  IN_PRODUCTION
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum ShippingKind {
+  HOME
+  PICKUP
+}
+
+enum PaymentProvider {
+  STRIPE
+}
+
+enum ShippingCarrier {
+  SEUR
+}
+
+enum StripeEventProcessingStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+enum OrderStatusSource {
+  SYSTEM
+  ADMIN
+  STRIPE
+}
+
+enum EmailDeliveryType {
+  ORDER_RECEIVED
+  ORDER_SHIPPED
+  ORDER_CANCELLED_OR_REFUNDED
+  ADMIN_NEW_ORDER
+}
+
+enum EmailDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model AdminUser {
+  id                  String               @id @default(cuid()) @db.VarChar(30)
+  email               String               @unique @db.VarChar(320)
+  passwordHash        String               @db.VarChar(255)
+  totpSecretEncrypted String?              @db.Text
+  totpEnabled         Boolean              @default(false)
+  isActive            Boolean              @default(true)
+  sessionVersion      Int                  @default(0) @db.UnsignedInt
+  createdAt           DateTime             @default(now()) @db.DateTime(3)
+  updatedAt           DateTime             @updatedAt @db.DateTime(3)
+  lastLoginAt         DateTime?            @db.DateTime(3)
+  recoveryCodes       AdminRecoveryCode[]
+  statusChanges       OrderStatusHistory[]
+  auditLogs           AuditLog[]
+
+  @@index([isActive])
+}
+
+model AdminRecoveryCode {
+  id          String    @id @default(cuid()) @db.VarChar(30)
+  adminUserId String    @db.VarChar(30)
+  codeHash    String    @db.VarChar(255)
+  usedAt      DateTime? @db.DateTime(3)
+  createdAt   DateTime  @default(now()) @db.DateTime(3)
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@unique([adminUserId, codeHash])
+  @@index([adminUserId, usedAt])
+}
+
+model Drop {
+  id               String            @id @default(cuid()) @db.VarChar(30)
+  title            String            @db.VarChar(191)
+  slug             String?           @unique @db.VarChar(191)
+  shortText        String            @db.Text
+  startsAt         DateTime?         @db.DateTime(3)
+  endsAt           DateTime?         @db.DateTime(3)
+  status           DropStatus        @default(DRAFT)
+  isPrimary        Boolean           @default(false)
+  heroMediaId      String?           @db.VarChar(30)
+  heroAlt          String?           @db.VarChar(255)
+  createdAt        DateTime          @default(now()) @db.DateTime(3)
+  updatedAt        DateTime          @updatedAt @db.DateTime(3)
+  archivedAt       DateTime?         @db.DateTime(3)
+  heroMedia        MediaAsset?       @relation("DropHero", fields: [heroMediaId], references: [id], onDelete: SetNull)
+  dropProducts     DropProduct[]
+  coupons          Coupon[]
+  checkoutAttempts CheckoutAttempt[]
+  orders           Order[]
+
+  @@index([status, startsAt, endsAt])
+  @@index([isPrimary, status])
+}
+
+model Product {
+  id                String                 @id @default(cuid()) @db.VarChar(30)
+  type              ProductType
+  status            ProductStatus          @default(DRAFT)
+  name              String                 @db.VarChar(191)
+  slug              String                 @unique @db.VarChar(191)
+  shortDescription  String                 @db.VarChar(500)
+  description       String                 @db.LongText
+  seoTitle          String?                @db.VarChar(191)
+  seoDescription    String?                @db.VarChar(500)
+  sizeGuideId       String?                @db.VarChar(30)
+  createdAt         DateTime               @default(now()) @db.DateTime(3)
+  updatedAt         DateTime               @updatedAt @db.DateTime(3)
+  archivedAt        DateTime?              @db.DateTime(3)
+  sizeGuide         SizeGuide?             @relation(fields: [sizeGuideId], references: [id], onDelete: SetNull)
+  sizes             ProductSize[]
+  images            ProductImage[]
+  customizations    ProductCustomization[]
+  bundleComponents  BundleComponent[]      @relation("BundleProduct")
+  bundleMemberships BundleComponent[]      @relation("ComponentProduct")
+  dropProducts      DropProduct[]
+  sourceOrderItems  OrderItem[]
+
+  @@index([status, createdAt])
+  @@index([sizeGuideId])
+}
+
+model Redirect {
+  id         String   @id @default(cuid()) @db.VarChar(30)
+  fromPath   String   @unique @db.VarChar(500)
+  toPath     String   @db.VarChar(500)
+  statusCode Int      @default(301) @db.UnsignedSmallInt
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+}
+
+model Size {
+  id           String        @id @default(cuid()) @db.VarChar(30)
+  label        String        @unique @db.VarChar(50)
+  sortOrder    Int           @default(0)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now()) @db.DateTime(3)
+  updatedAt    DateTime      @updatedAt @db.DateTime(3)
+  productSizes ProductSize[]
+
+  @@index([isActive, sortOrder])
+}
+
+model ProductSize {
+  productId String   @db.VarChar(30)
+  sizeId    String   @db.VarChar(30)
+  sortOrder Int?
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      Size     @relation(fields: [sizeId], references: [id], onDelete: Restrict)
+
+  @@id([productId, sizeId])
+  @@index([sizeId])
+}
+
+model SizeGuide {
+  id           String     @id @default(cuid()) @db.VarChar(30)
+  name         String     @db.VarChar(191)
+  mediaAssetId String     @db.VarChar(30)
+  altText      String     @db.VarChar(255)
+  createdAt    DateTime   @default(now()) @db.DateTime(3)
+  updatedAt    DateTime   @updatedAt @db.DateTime(3)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  products     Product[]
+
+  @@index([mediaAssetId])
+}
+
+model MediaAsset {
+  id                    String         @id @default(cuid()) @db.VarChar(30)
+  storageKey            String         @unique @db.VarChar(500)
+  originalName          String         @db.VarChar(255)
+  mimeType              String         @db.VarChar(100)
+  byteSize              BigInt         @db.UnsignedBigInt
+  width                 Int            @db.UnsignedInt
+  height                Int            @db.UnsignedInt
+  altText               String?        @db.VarChar(255)
+  createdAt             DateTime       @default(now()) @db.DateTime(3)
+  sizeGuides            SizeGuide[]
+  productImages         ProductImage[]
+  dropHeroes            Drop[]         @relation("DropHero")
+  marketingDropProducts DropProduct[]  @relation("DropProductMarketingMedia")
+
+  @@index([createdAt])
+}
+
+model ProductImage {
+  id           String     @id @default(cuid()) @db.VarChar(30)
+  productId    String     @db.VarChar(30)
+  mediaAssetId String     @db.VarChar(30)
+  sortOrder    Int        @default(0)
+  isPrimary    Boolean    @default(false)
+  altText      String     @db.VarChar(255)
+  createdAt    DateTime   @default(now()) @db.DateTime(3)
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+
+  @@index([productId, sortOrder])
+  @@index([mediaAssetId])
+}
+
+model ProductCustomization {
+  id          String                     @id @default(cuid()) @db.VarChar(30)
+  productId   String                     @db.VarChar(30)
+  type        CustomizationType
+  label       String                     @db.VarChar(100)
+  maxLength   Int?                       @db.UnsignedSmallInt
+  minNumber   Int?                       @db.UnsignedSmallInt
+  maxNumber   Int?                       @db.UnsignedSmallInt
+  sortOrder   Int                        @default(0)
+  isActive    Boolean                    @default(true)
+  product     Product                    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  dropConfigs DropProductCustomization[]
+
+  @@unique([productId, type])
+  @@index([productId, isActive, sortOrder])
+}
+
+model BundleComponent {
+  id                  String                     @id @default(cuid()) @db.VarChar(30)
+  bundleProductId     String                     @db.VarChar(30)
+  componentProductId  String                     @db.VarChar(30)
+  role                BundleComponentRole
+  quantity            Int                        @default(1) @db.UnsignedSmallInt
+  sortOrder           Int                        @default(0)
+  bundleProduct       Product                    @relation("BundleProduct", fields: [bundleProductId], references: [id], onDelete: Cascade)
+  componentProduct    Product                    @relation("ComponentProduct", fields: [componentProductId], references: [id], onDelete: Restrict)
+  customizationPrices DropProductCustomization[]
+
+  @@unique([bundleProductId, role])
+  @@index([componentProductId])
+}
+
+model DropProduct {
+  id                  String                     @id @default(cuid()) @db.VarChar(30)
+  dropId              String                     @db.VarChar(30)
+  productId           String                     @db.VarChar(30)
+  priceCents          Int                        @db.UnsignedInt
+  compareAtPriceCents Int?                       @db.UnsignedInt
+  isVisible           Boolean                    @default(true)
+  sortOrder           Int                        @default(0)
+  marketingMediaId    String?                    @db.VarChar(30)
+  createdAt           DateTime                   @default(now()) @db.DateTime(3)
+  updatedAt           DateTime                   @updatedAt @db.DateTime(3)
+  drop                Drop                       @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  product             Product                    @relation(fields: [productId], references: [id], onDelete: Restrict)
+  marketingMedia      MediaAsset?                @relation("DropProductMarketingMedia", fields: [marketingMediaId], references: [id], onDelete: SetNull)
+  customizationPrices DropProductCustomization[]
+  sourceOrderItems    OrderItem[]
+
+  @@unique([dropId, productId])
+  @@index([dropId, isVisible, sortOrder])
+  @@index([productId])
+  @@index([marketingMediaId])
+}
+
+model DropProductCustomization {
+  id                     String               @id @default(cuid()) @db.VarChar(30)
+  dropProductId          String               @db.VarChar(30)
+  productCustomizationId String               @db.VarChar(30)
+  bundleComponentId      String?              @db.VarChar(30)
+  isEnabled              Boolean              @default(true)
+  surchargeCents         Int                  @default(0) @db.UnsignedInt
+  createdAt              DateTime             @default(now()) @db.DateTime(3)
+  updatedAt              DateTime             @updatedAt @db.DateTime(3)
+  dropProduct            DropProduct          @relation(fields: [dropProductId], references: [id], onDelete: Cascade)
+  productCustomization   ProductCustomization @relation(fields: [productCustomizationId], references: [id], onDelete: Cascade)
+  bundleComponent        BundleComponent?     @relation(fields: [bundleComponentId], references: [id], onDelete: Cascade)
+
+  @@unique([dropProductId, productCustomizationId, bundleComponentId])
+  @@index([productCustomizationId])
+  @@index([bundleComponentId])
+}
+
+model Coupon {
+  id               String             @id @default(cuid()) @db.VarChar(30)
+  code             String             @unique @db.VarChar(100)
+  type             CouponType
+  value            Int                @db.UnsignedInt
+  dropId           String?            @db.VarChar(30)
+  minOrderCents    Int?               @db.UnsignedInt
+  maxRedemptions   Int?               @db.UnsignedInt
+  startsAt         DateTime?          @db.DateTime(3)
+  endsAt           DateTime?          @db.DateTime(3)
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now()) @db.DateTime(3)
+  updatedAt        DateTime           @updatedAt @db.DateTime(3)
+  archivedAt       DateTime?          @db.DateTime(3)
+  drop             Drop?              @relation(fields: [dropId], references: [id], onDelete: Cascade)
+  checkoutAttempts CheckoutAttempt[]
+  redemptions      CouponRedemption[]
+
+  @@index([dropId, isActive])
+  @@index([isActive, startsAt, endsAt])
+}
+
+model CheckoutAttempt {
+  id                      String                @id @default(cuid()) @db.VarChar(30)
+  dropId                  String                @db.VarChar(30)
+  status                  CheckoutAttemptStatus @default(CREATED)
+  email                   String                @db.VarChar(320)
+  firstName               String                @db.VarChar(100)
+  lastName                String                @db.VarChar(150)
+  phone                   String                @db.VarChar(30)
+  notes                   String?               @db.Text
+  currency                String                @default("EUR") @db.Char(3)
+  subtotalCents           Int                   @db.UnsignedInt
+  discountCents           Int                   @default(0) @db.UnsignedInt
+  shippingCents           Int                   @db.UnsignedInt
+  totalCents              Int                   @db.UnsignedInt
+  couponId                String?               @db.VarChar(30)
+  shippingKind            ShippingKind
+  shippingSnapshot        Json
+  cartSnapshot            Json
+  stripeCheckoutSessionId String?               @unique @db.VarChar(255)
+  stripePaymentIntentId   String?               @unique @db.VarChar(255)
+  expiresAt               DateTime              @db.DateTime(3)
+  createdAt               DateTime              @default(now()) @db.DateTime(3)
+  updatedAt               DateTime              @updatedAt @db.DateTime(3)
+  paidAt                  DateTime?             @db.DateTime(3)
+  drop                    Drop                  @relation(fields: [dropId], references: [id], onDelete: Restrict)
+  coupon                  Coupon?               @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  order                   Order?
+
+  @@index([status, expiresAt])
+  @@index([dropId, createdAt])
+  @@index([couponId])
+  @@index([email])
+}
+
+model Order {
+  id                  String               @id @default(cuid()) @db.VarChar(30)
+  number              Int                  @unique @default(autoincrement()) @db.UnsignedInt
+  publicToken         String               @unique @db.VarChar(128)
+  checkoutAttemptId   String?              @unique @db.VarChar(30)
+  dropId              String               @db.VarChar(30)
+  status              OrderStatus          @default(RECEIVED)
+  email               String               @db.VarChar(320)
+  firstName           String               @db.VarChar(100)
+  lastName            String               @db.VarChar(150)
+  phone               String               @db.VarChar(30)
+  notes               String?              @db.Text
+  currency            String               @default("EUR") @db.Char(3)
+  subtotalCents       Int                  @db.UnsignedInt
+  discountCents       Int                  @default(0) @db.UnsignedInt
+  shippingCents       Int                  @db.UnsignedInt
+  totalCents          Int                  @db.UnsignedInt
+  couponCodeSnapshot  String?              @db.VarChar(100)
+  couponTypeSnapshot  CouponType?
+  couponValueSnapshot Int?                 @db.UnsignedInt
+  createdAt           DateTime             @default(now()) @db.DateTime(3)
+  updatedAt           DateTime             @updatedAt @db.DateTime(3)
+  cancelledAt         DateTime?            @db.DateTime(3)
+  deliveredAt         DateTime?            @db.DateTime(3)
+  checkoutAttempt     CheckoutAttempt?     @relation(fields: [checkoutAttemptId], references: [id], onDelete: SetNull)
+  drop                Drop                 @relation(fields: [dropId], references: [id], onDelete: Restrict)
+  items               OrderItem[]
+  address             OrderAddress?
+  shipment            Shipment?
+  payment             Payment?
+  couponRedemption    CouponRedemption?
+  statusHistory       OrderStatusHistory[]
+  emailDeliveries     EmailDelivery[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([dropId, createdAt])
+}
+
+model OrderItem {
+  id                     String                   @id @default(cuid()) @db.VarChar(30)
+  orderId                String                   @db.VarChar(30)
+  productId              String?                  @db.VarChar(30)
+  dropProductId          String?                  @db.VarChar(30)
+  productTypeSnapshot    ProductType
+  productNameSnapshot    String                   @db.VarChar(191)
+  productSlugSnapshot    String                   @db.VarChar(191)
+  unitBasePriceCents     Int                      @db.UnsignedInt
+  unitCustomizationCents Int                      @default(0) @db.UnsignedInt
+  unitTotalCents         Int                      @db.UnsignedInt
+  quantity               Int                      @db.UnsignedSmallInt
+  lineTotalCents         Int                      @db.UnsignedInt
+  createdAt              DateTime                 @default(now()) @db.DateTime(3)
+  order                  Order                    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  product                Product?                 @relation(fields: [productId], references: [id], onDelete: SetNull)
+  dropProduct            DropProduct?             @relation(fields: [dropProductId], references: [id], onDelete: SetNull)
+  components             OrderItemComponent[]
+  customizations         OrderItemCustomization[]
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([dropProductId])
+}
+
+model OrderItemComponent {
+  id                  String                   @id @default(cuid()) @db.VarChar(30)
+  orderItemId         String                   @db.VarChar(30)
+  role                BundleComponentRole
+  productNameSnapshot String                   @db.VarChar(191)
+  sizeLabelSnapshot   String                   @db.VarChar(50)
+  sortOrder           Int                      @default(0)
+  orderItem           OrderItem                @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  customizations      OrderItemCustomization[]
+
+  @@unique([orderItemId, role])
+  @@index([orderItemId, sortOrder])
+}
+
+model OrderItemCustomization {
+  id                     String              @id @default(cuid()) @db.VarChar(30)
+  orderItemId            String              @db.VarChar(30)
+  orderItemComponentId   String?             @db.VarChar(30)
+  type                   CustomizationType
+  labelSnapshot          String              @db.VarChar(100)
+  valueSnapshot          String              @db.VarChar(100)
+  surchargeCentsSnapshot Int                 @default(0) @db.UnsignedInt
+  sortOrder              Int                 @default(0)
+  orderItem              OrderItem           @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  orderItemComponent     OrderItemComponent? @relation(fields: [orderItemComponentId], references: [id], onDelete: Restrict)
+
+  @@index([orderItemId, sortOrder])
+  @@index([orderItemComponentId])
+}
+
+model OrderAddress {
+  id             String   @id @default(cuid()) @db.VarChar(30)
+  orderId        String   @unique @db.VarChar(30)
+  countryCode    String   @default("ES") @db.Char(2)
+  postalCode     String   @db.VarChar(10)
+  province       String   @db.VarChar(100)
+  city           String   @db.VarChar(150)
+  street         String   @db.VarChar(191)
+  streetNumber   String   @db.VarChar(30)
+  additionalLine String?  @db.VarChar(191)
+  createdAt      DateTime @default(now()) @db.DateTime(3)
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
+model Shipment {
+  id               String          @id @default(cuid()) @db.VarChar(30)
+  orderId          String          @unique @db.VarChar(30)
+  kind             ShippingKind
+  carrier          ShippingCarrier @default(SEUR)
+  trackingNumber   String?         @db.VarChar(191)
+  trackingUrl      String?         @db.VarChar(2048)
+  pickupExternalId String?         @db.VarChar(191)
+  pickupName       String?         @db.VarChar(191)
+  pickupAddress    String?         @db.VarChar(255)
+  pickupPostalCode String?         @db.VarChar(10)
+  pickupCity       String?         @db.VarChar(150)
+  pickupLatitude   Decimal?        @db.Decimal(10, 7)
+  pickupLongitude  Decimal?        @db.Decimal(10, 7)
+  shippedAt        DateTime?       @db.DateTime(3)
+  createdAt        DateTime        @default(now()) @db.DateTime(3)
+  updatedAt        DateTime        @updatedAt @db.DateTime(3)
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([kind, shippedAt])
+  @@index([trackingNumber])
+}
+
+model ShippingMethod {
+  id          String       @id @default(cuid()) @db.VarChar(30)
+  kind        ShippingKind @unique
+  displayName String       @db.VarChar(100)
+  priceCents  Int          @db.UnsignedInt
+  isEnabled   Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now()) @db.DateTime(3)
+  updatedAt   DateTime     @updatedAt @db.DateTime(3)
+
+  @@index([isEnabled, sortOrder])
+}
+
+model Payment {
+  id                      String          @id @default(cuid()) @db.VarChar(30)
+  orderId                 String          @unique @db.VarChar(30)
+  provider                PaymentProvider @default(STRIPE)
+  stripeCheckoutSessionId String          @unique @db.VarChar(255)
+  stripePaymentIntentId   String?         @unique @db.VarChar(255)
+  status                  PaymentStatus   @default(PAID)
+  amountCents             Int             @db.UnsignedInt
+  currency                String          @default("EUR") @db.Char(3)
+  paidAt                  DateTime        @db.DateTime(3)
+  createdAt               DateTime        @default(now()) @db.DateTime(3)
+  updatedAt               DateTime        @updatedAt @db.DateTime(3)
+  order                   Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  refunds                 Refund[]
+
+  @@index([status, paidAt])
+}
+
+model Refund {
+  id             String       @id @default(cuid()) @db.VarChar(30)
+  paymentId      String       @db.VarChar(30)
+  stripeRefundId String       @unique @db.VarChar(255)
+  amountCents    Int          @db.UnsignedInt
+  status         RefundStatus
+  reason         String?      @db.VarChar(500)
+  createdAt      DateTime     @default(now()) @db.DateTime(3)
+  updatedAt      DateTime     @updatedAt @db.DateTime(3)
+  payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([paymentId, createdAt])
+  @@index([status])
+}
+
+model StripeEvent {
+  id               String                      @id @default(cuid()) @db.VarChar(30)
+  stripeEventId    String                      @unique @db.VarChar(255)
+  type             String                      @db.VarChar(191)
+  receivedAt       DateTime                    @default(now()) @db.DateTime(3)
+  processedAt      DateTime?                   @db.DateTime(3)
+  processingStatus StripeEventProcessingStatus @default(RECEIVED)
+  errorSummary     String?                     @db.VarChar(500)
+
+  @@index([processingStatus, receivedAt])
+}
+
+model CouponRedemption {
+  id            String   @id @default(cuid()) @db.VarChar(30)
+  couponId      String   @db.VarChar(30)
+  orderId       String   @unique @db.VarChar(30)
+  discountCents Int      @db.UnsignedInt
+  createdAt     DateTime @default(now()) @db.DateTime(3)
+  coupon        Coupon   @relation(fields: [couponId], references: [id], onDelete: Restrict)
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([couponId, createdAt])
+}
+
+model OrderStatusHistory {
+  id                   String            @id @default(cuid()) @db.VarChar(30)
+  orderId              String            @db.VarChar(30)
+  fromStatus           OrderStatus?
+  toStatus             OrderStatus
+  changedByAdminUserId String?           @db.VarChar(30)
+  source               OrderStatusSource
+  createdAt            DateTime          @default(now()) @db.DateTime(3)
+  order                Order             @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  changedByAdminUser   AdminUser?        @relation(fields: [changedByAdminUserId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@index([changedByAdminUserId])
+}
+
+model EmailDelivery {
+  id               String              @id @default(cuid()) @db.VarChar(30)
+  orderId          String?             @db.VarChar(30)
+  type             EmailDeliveryType
+  recipient        String              @db.VarChar(320)
+  status           EmailDeliveryStatus @default(PENDING)
+  attemptCount     Int                 @default(0) @db.UnsignedSmallInt
+  lastAttemptAt    DateTime?           @db.DateTime(3)
+  sentAt           DateTime?           @db.DateTime(3)
+  lastErrorSummary String?             @db.VarChar(500)
+  createdAt        DateTime            @default(now()) @db.DateTime(3)
+  updatedAt        DateTime            @updatedAt @db.DateTime(3)
+  order            Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([orderId, type])
+}
+
+model AuditLog {
+  id            String    @id @default(cuid()) @db.VarChar(30)
+  adminUserId   String    @db.VarChar(30)
+  action        String    @db.VarChar(100)
+  entityType    String    @db.VarChar(100)
+  entityId      String    @db.VarChar(191)
+  changeSummary Json?
+  createdAt     DateTime  @default(now()) @db.DateTime(3)
+  adminUser     AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+
+  @@index([adminUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
+}
+
+model StoreSettings {
+  id                   Int      @id @default(1) @db.UnsignedTinyInt
+  storeName            String   @db.VarChar(191)
+  supportEmail         String   @db.VarChar(320)
+  deliveryEstimateText String   @db.VarChar(500)
+  globalNotice         String?  @db.VarChar(500)
+  globalNoticeEnabled  Boolean  @default(false)
+  createdAt            DateTime @default(now()) @db.DateTime(3)
+  updatedAt            DateTime @updatedAt @db.DateTime(3)
+}

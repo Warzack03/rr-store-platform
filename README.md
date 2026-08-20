@@ -1,27 +1,64 @@
 # Rising Raimon Store Platform
 
-Base técnica de la nueva tienda independiente de Rising Raimon. La Fase 1
-incluye Next.js, TypeScript, Tailwind, Prisma/MySQL, validación de entorno,
-sistema visual, shells público/admin, health y seguridad base. No incluye aún
-modelo ecommerce ni lógica de catálogo, compra o administración.
+Base técnica de la tienda independiente de Rising Raimon. Las fases 1 y 2
+incluyen la aplicación Next.js, el sistema visual, la seguridad base y el modelo
+de datos completo del MVP con Prisma/MySQL. El catálogo, la administración, el
+checkout y el resto de lógica ecommerce se implementarán en fases posteriores.
 
 ## Requisitos
 
 - Node.js 22 o superior.
 - npm 10 o superior.
-- MySQL 8 o MariaDB compatible para comprobar la conexión de Prisma.
+- MySQL 8 o MariaDB compatible.
 
 ## Ejecución local
 
-1. Copia `.env.example` a `.env` y ajusta `DATABASE_URL` y `MEDIA_ROOT`.
-2. Crea una base de datos local vacía para la tienda.
+1. Copia `.env.example` a `.env` y ajusta `DATABASE_URL`,
+   `SHADOW_DATABASE_URL` y `MEDIA_ROOT`.
+2. Crea dos bases vacías: una para la tienda y otra distinta para las migraciones
+   de desarrollo.
 3. Instala dependencias con `npm install`.
-4. Genera el cliente con `npm run prisma:generate`.
-5. Arranca con `npm run dev` y abre `http://localhost:3000`.
+4. Aplica las migraciones con `npm run db:migrate:dev`.
+5. Carga la configuración mínima con `npm run db:seed`.
+6. Arranca con `npm run dev` y abre `http://localhost:3000`.
 
 El health está en `GET /api/health`. Sin `DATABASE_URL`, la aplicación responde
-correctamente e indica que la base de datos no está configurada. Con la variable
-definida, ejecuta una consulta mínima y responde `503` si MySQL no está accesible.
+correctamente e indica que la base no está configurada. Con la variable definida,
+ejecuta una consulta mínima y responde `503` si MySQL no está accesible.
+
+## Base de datos
+
+```bash
+npm run prisma:generate       # regenera el cliente
+npm run prisma:validate       # valida el esquema
+npm run db:migrate:dev        # crea/aplica migraciones en desarrollo
+npm run db:migrate:deploy     # aplica migraciones existentes en un despliegue
+npm run db:seed               # seed mínimo e idempotente
+npm run db:verify             # verifica tablas, seed, relaciones y restricciones
+npm run db:migrate:reset      # destruye y reconstruye la BBDD local
+```
+
+`SHADOW_DATABASE_URL` debe apuntar a una base diferente de `DATABASE_URL`. La
+cuenta de MySQL necesita permisos para usar ambas en desarrollo. El comando de
+reset elimina todos los datos y solo debe emplearse de forma consciente en local.
+
+El seed crea únicamente `StoreSettings` y los métodos de envío `HOME` y `PICKUP`.
+No crea catálogo, pedidos, cupones, tallas, drops ni datos de demostración.
+
+## Primer administrador
+
+La creación inicial es un comando explícito y solo funciona mientras no exista
+ningún administrador:
+
+```powershell
+$env:ADMIN_INITIAL_EMAIL = "admin@example.com"
+$env:ADMIN_INITIAL_PASSWORD = "una-clave-larga-y-unica"
+npm run admin:create
+Remove-Item Env:ADMIN_INITIAL_EMAIL, Env:ADMIN_INITIAL_PASSWORD
+```
+
+La contraseña debe tener entre 12 y 128 caracteres, se guarda con Argon2id y nunca
+se imprime. Después de crear la cuenta, elimina esas variables del entorno.
 
 ## Comprobaciones
 
@@ -30,6 +67,7 @@ npm run lint
 npm run typecheck
 npm run build
 npm run prisma:validate
+npm run db:verify
 ```
 
 ## Variables de entorno
@@ -38,10 +76,13 @@ npm run prisma:validate
 | --- | --- | --- |
 | `STORE_ENV` | Sí en deploy | `local`, `beta` o `production`. Beta y local no se indexan. |
 | `SITE_URL` | Sí en deploy | Origen canónico del entorno. |
-| `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB. Prisma usa un pool máximo de 5 conexiones. |
-| `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy; nunca se hardcodea. |
+| `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación; pool máximo de 5 conexiones. |
+| `SHADOW_DATABASE_URL` | En migraciones dev | Base vacía y distinta usada por Prisma Migrate. |
+| `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy. |
+| `ADMIN_INITIAL_EMAIL` | Solo alta inicial | Email del primer administrador. |
+| `ADMIN_INITIAL_PASSWORD` | Solo alta inicial | Contraseña temporal de entrada al comando de alta. |
 
-No se deben guardar valores reales en Git. Beta y producción usan bases de datos,
+No se guardan valores reales en Git. Local, beta y producción usan bases de datos,
 secretos y raíces de medios distintas.
 
 ## Beta
@@ -57,14 +98,15 @@ secretos y raíces de medios distintas.
 - Rama de despliegue: `main`.
 - `STORE_ENV=production` y `SITE_URL=https://tienda.risingraimon.es`.
 - Base de datos y `MEDIA_ROOT` exclusivos de producción.
+- En cada release se ejecuta `npm run db:migrate:deploy` antes del arranque.
 - Comando de build: `npm ci && npm run build`.
 - Comando de inicio: `npm run start`.
-- Comprobar `/api/health` después de cada despliegue.
+- Se comprueba `/api/health` después de cada despliegue.
 
-Hostinger debe ejecutar la aplicación como proceso Node.js y conservar los medios
-fuera del directorio que sustituye cada despliegue. SSL/CDN y backups se gestionan
-en Hostinger. No existe dependencia de la API, sesión, base de datos o filesystem
-de la web deportiva.
+Hostinger ejecuta la aplicación como proceso Node.js y conserva los medios fuera
+del directorio sustituido en cada despliegue. SSL/CDN y backups se gestionan en
+Hostinger. No existe dependencia de la API, sesión, base de datos o filesystem de
+la web deportiva.
 
 ## Estructura
 
@@ -75,8 +117,11 @@ src/features/        dominios que se implementarán por fases
 src/lib/             configuración transversal
 src/server/db/       Prisma singleton y health de MySQL
 src/styles/          tokens visuales de Rising Raimon
-prisma/              configuración del datasource; sin modelos en Fase 1
+prisma/schema.prisma modelo relacional del MVP
+prisma/migrations/   historial SQL versionado
+prisma/seed.ts       configuración inicial idempotente
+scripts/             alta inicial y verificación de BBDD
 ```
 
-La siguiente fase será exclusivamente el modelo de datos Prisma, tras una nueva
-instrucción y revisión de los documentos de especificación.
+La Fase 3 será el catálogo público, tras una nueva instrucción y revisión de su
+documentación específica.

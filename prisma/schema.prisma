@@ -1,0 +1,11 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// Phase 1 intentionally contains no ecommerce models.
+// The complete, reviewed data model belongs to Phase 2.

@@ -1,0 +1,105 @@
+@import "tailwindcss";
+@import "@fontsource/bebas-neue/400.css";
+@import "@fontsource/barlow-condensed/500.css";
+@import "@fontsource/barlow-condensed/600.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans/700.css";
+@import "../styles/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--rr-navy-950);
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 85% 10%, rgb(255 212 111 / 10%), transparent 25rem),
+    linear-gradient(150deg, var(--rr-navy-900) 0%, var(--rr-navy-950) 72%);
+  color: var(--rr-white);
+  font-family: var(--font-ibm-plex-sans), Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--rr-gold-400);
+  outline-offset: 4px;
+}
+
+::selection {
+  background: var(--rr-gold-400);
+  color: var(--rr-navy-950);
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-180%);
+  border-radius: var(--rr-radius-sm);
+  background: var(--rr-gold-400);
+  padding: 0.75rem 1rem;
+  color: var(--rr-navy-950);
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.brand-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--rr-border);
+  background: linear-gradient(135deg, rgb(17 41 71 / 90%), rgb(7 15 29 / 96%));
+  box-shadow: var(--rr-shadow);
+}
+
+.brand-panel::after {
+  position: absolute;
+  inset: auto -5rem -9rem auto;
+  width: 18rem;
+  height: 18rem;
+  border: 1px solid rgb(255 212 111 / 20%);
+  border-radius: 50%;
+  content: "";
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a,
+  button,
+  .skip-link {
+    transition-duration: 180ms;
+    transition-property: color, background-color, border-color, transform;
+    transition-timing-function: ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -1,0 +1,35 @@
+:root {
+  --font-bebas-neue: "Bebas Neue";
+  --font-barlow-condensed: "Barlow Condensed";
+  --font-ibm-plex-sans: "IBM Plex Sans";
+  --rr-navy-950: #070f1d;
+  --rr-navy-900: #09172d;
+  --rr-navy-800: #112947;
+  --rr-navy-700: #193a60;
+  --rr-gold-400: #ffd46f;
+  --rr-gold-500: #fdcb58;
+  --rr-white: #ffffff;
+  --rr-gray-100: #e8edf3;
+  --rr-gray-300: #b4bfcc;
+  --rr-gray-500: #77869a;
+  --rr-success: #4ade80;
+  --rr-warning: #fbbf24;
+  --rr-error: #fb7185;
+  --rr-info: #60a5fa;
+  --rr-border: rgb(255 255 255 / 14%);
+  --rr-panel: rgb(17 41 71 / 72%);
+  --rr-shadow: 0 24px 80px rgb(0 0 0 / 28%);
+  --rr-radius-sm: 4px;
+  --rr-radius-md: 8px;
+  --rr-content: 80rem;
+}
+
+@theme inline {
+  --color-brand-navy: var(--rr-navy-900);
+  --color-brand-panel: var(--rr-navy-800);
+  --color-brand-gold: var(--rr-gold-400);
+  --color-brand-white: var(--rr-white);
+  --font-display: var(--font-bebas-neue);
+  --font-heading: var(--font-barlow-condensed);
+  --font-sans: var(--font-ibm-plex-sans);
+}

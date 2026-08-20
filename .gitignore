@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+
+# Next.js
+/.next
+/out
+
+# generated Prisma Client
+/src/generated/prisma
+
+# environment and secrets
+.env
+.env.*
+!.env.example
+
+# local media (production media lives outside the deploy directory)
+/media
+
+# logs and test output
+*.log
+/coverage
+/playwright-report
+/test-results
+
+# editors / OS
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

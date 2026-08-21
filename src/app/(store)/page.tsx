@@ -1,93 +1,160 @@
+import type { Metadata } from "next";
+
 import { BrandMark } from "@/components/brand/brand-mark";
 import { ButtonLink } from "@/components/ui/button-link";
+import { CatalogImage } from "@/features/catalog/components/catalog-image";
+import { Countdown } from "@/features/catalog/components/countdown";
+import { DropSection } from "@/features/catalog/components/drop-section";
+import { dropStateLabels } from "@/features/catalog/domain";
+import { getPublicCatalog } from "@/features/catalog/server/catalog";
 
-const highlights = [
-  {
-    number: "01",
-    title: "Prendas del club",
-    text: "Diseños oficiales para llevar los colores de Rising Raimon dentro y fuera del campo.",
-  },
-  {
-    number: "02",
-    title: "Personalización",
-    text: "Tu nombre y dorsal para hacer cada equipación verdaderamente tuya.",
-  },
-  {
-    number: "03",
-    title: "Drops limitados",
-    text: "Colecciones abiertas durante un tiempo concreto y fabricadas para el equipo.",
-  },
-] as const;
+export const revalidate = 60;
 
-export default function HomePage() {
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    url: "/",
+    siteName: "Tienda Rising Raimon",
+    title: "Tienda oficial | Rising Raimon",
+    description: "Equipaciones y prendas oficiales de Rising Raimon.",
+    images: [
+      {
+        url: "/brand/escudo-rising-raimon.webp",
+        alt: "Escudo de Rising Raimon",
+      },
+    ],
+  },
+};
+
+export default async function HomePage() {
+  const catalog = await getPublicCatalog();
+  const featuredDrop = catalog.find((drop) => drop.state !== "ENDED") ?? null;
+  const historicalDrops = catalog.filter((drop) => drop.state === "ENDED");
+  const now = new Date().toISOString();
+
   return (
     <>
-      <section className="mx-auto max-w-[80rem] px-5 py-10 md:px-8 md:py-16 xl:px-12 xl:py-20">
-        <div className="brand-panel grid min-h-[33rem] items-center gap-10 px-6 py-12 md:grid-cols-[1.25fr_0.75fr] md:px-12 lg:px-16">
-          <div className="relative z-10 max-w-2xl">
-            <p className="mb-4 font-heading text-sm font-bold uppercase tracking-[0.24em] text-brand-gold sm:text-base">
-              Tienda oficial
-            </p>
-            <h1 className="font-display text-[clamp(3.75rem,12vw,8.5rem)] leading-[0.83] tracking-[0.015em] text-white">
-              El próximo drop está en camino
-            </h1>
-            <p className="mt-7 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
-              Estamos preparando nuevas prendas para que lleves el escudo de
-              Rising Raimon como se merece.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href="/productos">Ver productos</ButtonLink>
-              <ButtonLink
-                href="https://risingraimon.es"
-                external
-                variant="secondary"
-              >
-                Volver al club
-              </ButtonLink>
+      <section className="mx-auto max-w-[80rem] px-5 py-8 md:px-8 md:py-12 xl:px-12 xl:py-16">
+        {featuredDrop ? (
+          <div className="brand-panel grid min-h-[34rem] overflow-hidden md:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative z-10 flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-14">
+              <p className="font-heading text-sm font-bold uppercase tracking-[0.24em] text-brand-gold sm:text-base">
+                {dropStateLabels[featuredDrop.state]}
+              </p>
+              <h1 className="mt-4 font-display text-[clamp(4rem,10vw,8rem)] leading-[0.84] tracking-[0.015em] text-white">
+                {featuredDrop.title}
+              </h1>
+              <p className="mt-6 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
+                {featuredDrop.shortText}
+              </p>
+
+              <div className="mt-7">
+                <Countdown
+                  state={featuredDrop.state === "UPCOMING" ? "UPCOMING" : "AVAILABLE"}
+                  target={
+                    featuredDrop.state === "UPCOMING"
+                      ? featuredDrop.startsAt
+                      : featuredDrop.endsAt
+                  }
+                  initialNow={now}
+                />
+              </div>
+
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink
+                  href={`/productos#drop-${featuredDrop.slug ?? featuredDrop.id}`}
+                >
+                  Ver productos
+                </ButtonLink>
+                <ButtonLink
+                  href="https://risingraimon.es"
+                  external
+                  variant="secondary"
+                >
+                  Volver al club
+                </ButtonLink>
+              </div>
+            </div>
+
+            <div className="relative min-h-80 overflow-hidden border-t border-white/10 bg-[#0e223b] md:min-h-full md:border-l md:border-t-0">
+              <CatalogImage
+                image={featuredDrop.hero}
+                priority
+                sizes="(max-width: 767px) 100vw, 48vw"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#07162999] via-transparent to-transparent" />
             </div>
           </div>
-
-          <div className="relative z-10 mx-auto flex aspect-square w-full max-w-[18rem] items-center justify-center rounded-full border border-brand-gold/30 bg-brand-gold/[0.06] md:max-w-[22rem]">
-            <div className="absolute inset-5 rounded-full border border-white/10" />
-            <BrandMark priority size={230} />
-          </div>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="asi-sera-la-tienda"
-        className="mx-auto max-w-[80rem] px-5 pb-16 md:px-8 md:pb-24 xl:px-12"
-      >
-        <div className="mb-8 flex items-end justify-between gap-6 border-b border-white/10 pb-5">
-          <div>
-            <p className="font-heading text-sm font-bold uppercase tracking-[0.2em] text-brand-gold">
-              Preparados para el siguiente partido
-            </p>
-            <h2
-              id="asi-sera-la-tienda"
-              className="mt-2 font-display text-4xl tracking-wide text-white sm:text-5xl"
-            >
-              Todo Rising Raimon
-            </h2>
-          </div>
-        </div>
-
-        <div className="grid gap-px overflow-hidden border border-white/10 bg-white/10 md:grid-cols-3">
-          {highlights.map((item) => (
-            <article key={item.number} className="bg-[#0b1b31] p-6 sm:p-8">
-              <span className="font-display text-4xl text-brand-gold/45">
-                {item.number}
-              </span>
-              <h3 className="mt-8 font-heading text-2xl font-bold uppercase tracking-wide text-white">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-white/65 sm:text-base">
-                {item.text}
+        ) : (
+          <div className="brand-panel grid min-h-[33rem] items-center gap-10 px-6 py-12 md:grid-cols-[1.25fr_0.75fr] md:px-12 lg:px-16">
+            <div className="relative z-10 max-w-2xl">
+              <p className="font-heading text-sm font-bold uppercase tracking-[0.24em] text-brand-gold sm:text-base">
+                Tienda oficial
               </p>
-            </article>
-          ))}
-        </div>
+              <h1 className="mt-4 font-display text-[clamp(3.75rem,12vw,8.5rem)] leading-[0.83] tracking-[0.015em] text-white">
+                Estamos preparando el próximo drop
+              </h1>
+              <p className="mt-7 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
+                Mientras llega, puedes recordar las equipaciones y prendas que ya
+                han formado parte de Rising Raimon.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href="/productos">Ver productos anteriores</ButtonLink>
+                <ButtonLink
+                  href="https://risingraimon.es"
+                  external
+                  variant="secondary"
+                >
+                  Volver al club
+                </ButtonLink>
+              </div>
+            </div>
+
+            <div className="relative z-10 mx-auto flex aspect-square w-full max-w-[18rem] items-center justify-center rounded-full border border-brand-gold/30 bg-brand-gold/[0.06] md:max-w-[22rem]">
+              <div className="absolute inset-5 rounded-full border border-white/10" />
+              <BrandMark priority size={230} />
+            </div>
+          </div>
+        )}
       </section>
+
+      {featuredDrop ? (
+        <div className="mx-auto max-w-[80rem] px-5 pb-16 md:px-8 md:pb-24 xl:px-12">
+          <DropSection drop={featuredDrop} />
+        </div>
+      ) : null}
+
+      {historicalDrops.length > 0 ? (
+        <section
+          aria-labelledby="drops-anteriores"
+          className="border-t border-white/10 bg-black/10"
+        >
+          <div className="mx-auto max-w-[80rem] px-5 py-16 md:px-8 md:py-20 xl:px-12">
+            <div className="mb-10">
+              <p className="font-heading text-sm font-bold uppercase tracking-[0.2em] text-brand-gold">
+                Nuestra historia
+              </p>
+              <h2
+                id="drops-anteriores"
+                className="mt-2 font-display text-5xl tracking-wide text-white sm:text-6xl"
+              >
+                Drops anteriores
+              </h2>
+              <p className="mt-3 text-white/60">
+                Colecciones finalizadas que siguen formando parte del club.
+              </p>
+            </div>
+
+            <div className="space-y-16">
+              {historicalDrops.map((drop) => (
+                <DropSection key={drop.id} drop={drop} headingLevel={3} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </>
   );
 }

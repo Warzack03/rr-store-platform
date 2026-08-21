@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/features/catalog/domain.test.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "db:migrate:dev": "prisma migrate dev",
@@ -16,6 +17,7 @@
     "db:migrate:reset": "prisma migrate reset --force",
     "db:seed": "prisma db seed",
     "db:verify": "tsx scripts/verify-database.ts",
+    "catalog:verify": "tsx scripts/verify-catalog.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "postinstall": "prisma generate"
   },

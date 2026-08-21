@@ -1,9 +1,9 @@
 # Rising Raimon Store Platform
 
-Base técnica de la tienda independiente de Rising Raimon. Las fases 1 y 2
-incluyen la aplicación Next.js, el sistema visual, la seguridad base y el modelo
-de datos completo del MVP con Prisma/MySQL. El catálogo, la administración, el
-checkout y el resto de lógica ecommerce se implementarán en fases posteriores.
+Base técnica de la tienda independiente de Rising Raimon. Las fases 1 a 3
+incluyen la aplicación Next.js, el sistema visual, la seguridad base, el modelo
+de datos y el catálogo público. La administración, el carrito, el checkout y el
+resto de lógica ecommerce se implementarán en fases posteriores.
 
 ## Requisitos
 
@@ -45,6 +45,22 @@ reset elimina todos los datos y solo debe emplearse de forma consciente en local
 El seed crea únicamente `StoreSettings` y los métodos de envío `HOME` y `PICKUP`.
 No crea catálogo, pedidos, cupones, tallas, drops ni datos de demostración.
 
+## Catálogo público
+
+- `/` muestra el drop disponible o próximo y los drops anteriores.
+- `/productos` agrupa el catálogo por drop.
+- `/productos/[slug]` muestra galería, tallas, guía, personalizaciones,
+  componentes y relacionados.
+- Los precios y suplementos de un próximo drop no se envían a la interfaz.
+- Los medios se sirven desde `MEDIA_ROOT` únicamente si están registrados en
+  `MediaAsset` y son JPG, PNG o WebP.
+- Los redirects de la tabla `Redirect` responden con un 301 real.
+- El sitemap solo contiene URLs cuando `STORE_ENV=production`.
+
+Las páginas públicas se revalidan cada minuto. Hasta que exista el backoffice de
+la Fase 4, el catálogo se carga directamente en BBDD; no se incluyen productos de
+demostración en el seed oficial.
+
 ## Primer administrador
 
 La creación inicial es un comando explícito y solo funciona mientras no exista
@@ -65,9 +81,11 @@ se imprime. Después de crear la cuenta, elimina esas variables del entorno.
 ```bash
 npm run lint
 npm run typecheck
+npm run test
 npm run build
 npm run prisma:validate
 npm run db:verify
+npm run catalog:verify -- http://127.0.0.1:3000
 ```
 
 ## Variables de entorno
@@ -113,7 +131,7 @@ la web deportiva.
 ```text
 src/app/             rutas públicas, admin y API
 src/components/      componentes compartidos
-src/features/        dominios que se implementarán por fases
+src/features/catalog dominio y componentes del catálogo público
 src/lib/             configuración transversal
 src/server/db/       Prisma singleton y health de MySQL
 src/styles/          tokens visuales de Rising Raimon
@@ -123,5 +141,5 @@ prisma/seed.ts       configuración inicial idempotente
 scripts/             alta inicial y verificación de BBDD
 ```
 
-La Fase 3 será el catálogo público, tras una nueva instrucción y revisión de su
-documentación específica.
+La Fase 4 será la autenticación y administración del catálogo, tras una nueva
+instrucción y revisión de su documentación específica.

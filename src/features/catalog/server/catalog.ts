@@ -372,7 +372,7 @@ export const getPublicProduct = cache(
         ),
       bundleComponents: product.bundleComponents.map((component) => ({
         id: component.id,
-        role: component.role,
+        label: component.label,
         name: component.componentProduct.name,
         sizes: sortSizes(component.componentProduct.sizes),
         customizations: component.componentProduct.customizations

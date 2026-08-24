@@ -18,6 +18,8 @@ const databaseUrlSchema = z
     }
   });
 
+const authSecretSchema = z.string().min(32);
+
 const parsedRuntimeEnvironment = runtimeEnvironmentSchema.safeParse({
   STORE_ENV: process.env.STORE_ENV,
   SITE_URL: process.env.SITE_URL,
@@ -41,6 +43,16 @@ export function getDatabaseUrl(): string | null {
 
   if (!parsed.success) {
     throw new Error("La configuración de la base de datos no es válida.");
+  }
+
+  return parsed.data;
+}
+
+export function getAuthSecret(): string {
+  const parsed = authSecretSchema.safeParse(process.env.AUTH_SECRET);
+
+  if (!parsed.success) {
+    throw new Error("La configuración de autenticación no es válida.");
   }
 
   return parsed.data;

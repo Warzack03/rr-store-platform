@@ -29,11 +29,6 @@ enum CustomizationType {
   NUMBER
 }
 
-enum BundleComponentRole {
-  SHIRT
-  SHORTS
-}
-
 enum CouponType {
   PERCENT
   FIXED
@@ -287,14 +282,14 @@ model BundleComponent {
   id                  String                     @id @default(cuid()) @db.VarChar(30)
   bundleProductId     String                     @db.VarChar(30)
   componentProductId  String                     @db.VarChar(30)
-  role                BundleComponentRole
+  label               String                     @db.VarChar(100)
   quantity            Int                        @default(1) @db.UnsignedSmallInt
   sortOrder           Int                        @default(0)
   bundleProduct       Product                    @relation("BundleProduct", fields: [bundleProductId], references: [id], onDelete: Cascade)
   componentProduct    Product                    @relation("ComponentProduct", fields: [componentProductId], references: [id], onDelete: Restrict)
   customizationPrices DropProductCustomization[]
 
-  @@unique([bundleProductId, role])
+  @@index([bundleProductId, sortOrder])
   @@index([componentProductId])
 }
 
@@ -462,14 +457,13 @@ model OrderItem {
 model OrderItemComponent {
   id                  String                   @id @default(cuid()) @db.VarChar(30)
   orderItemId         String                   @db.VarChar(30)
-  role                BundleComponentRole
+  componentLabelSnapshot String                @db.VarChar(100)
   productNameSnapshot String                   @db.VarChar(191)
   sizeLabelSnapshot   String                   @db.VarChar(50)
   sortOrder           Int                      @default(0)
   orderItem           OrderItem                @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
   customizations      OrderItemCustomization[]
 
-  @@unique([orderItemId, role])
   @@index([orderItemId, sortOrder])
 }
 

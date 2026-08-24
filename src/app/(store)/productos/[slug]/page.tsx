@@ -15,7 +15,6 @@ import {
   getPublicProductSlugs,
 } from "@/features/catalog/server/catalog";
 import type {
-  BundleComponentView,
   CatalogProductDetail,
   ProductCustomizationView,
   ProductSizeView,
@@ -131,11 +130,6 @@ function CustomizationList({
     </ul>
   );
 }
-
-const componentRoleLabels: Record<BundleComponentView["role"], string> = {
-  SHIRT: "Camiseta",
-  SHORTS: "Pantalón",
-};
 
 function ProductStructuredData({ product }: { product: CatalogProductDetail }) {
   const productUrl = new URL(`/productos/${product.slug}`, env.SITE_URL).toString();
@@ -272,7 +266,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   id="componentes"
                   className="font-heading text-xl font-bold uppercase tracking-wide text-white"
                 >
-                  Elige cada parte de la equipación
+                  Elige cada producto del pack
                 </h2>
                 <div className="mt-4 space-y-6">
                   {product.bundleComponents.map((component) => (
@@ -281,7 +275,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       className="border-l-2 border-brand-gold/65 pl-4"
                     >
                       <h3 className="font-heading text-lg font-bold uppercase tracking-wide text-brand-gold">
-                        {componentRoleLabels[component.role]}
+                        {component.label}
                       </h3>
                       <p className="mt-1 text-sm text-white/58">{component.name}</p>
                       <div className="mt-3">

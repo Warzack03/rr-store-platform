@@ -83,6 +83,89 @@ a {
   content: "";
 }
 
+.admin-shell[data-admin-theme="light"] {
+  color-scheme: light;
+}
+
+.admin-shell[data-admin-theme="dark"] {
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 90% 0%, rgb(255 212 111 / 7%), transparent 28rem),
+    #07101d;
+  color: #f8fafc;
+}
+
+.admin-shell[data-admin-theme="dark"] .bg-white {
+  background-color: #0b1b31;
+}
+
+.admin-shell[data-admin-theme="dark"] .bg-slate-50 {
+  background-color: #10243d;
+}
+
+.admin-shell[data-admin-theme="dark"] .bg-slate-100 {
+  background-color: #132a46;
+}
+
+.admin-shell[data-admin-theme="dark"] .text-slate-950,
+.admin-shell[data-admin-theme="dark"] .text-slate-600 {
+  color: #e2e8f0;
+}
+
+.admin-shell[data-admin-theme="dark"] .text-slate-500 {
+  color: #a9b7c9;
+}
+
+.admin-shell[data-admin-theme="dark"] .text-slate-400 {
+  color: #94a3b8;
+}
+
+.admin-shell[data-admin-theme="dark"] .border-slate-100,
+.admin-shell[data-admin-theme="dark"] .border-slate-200,
+.admin-shell[data-admin-theme="dark"] .border-slate-300 {
+  border-color: #30445f;
+}
+
+.admin-shell[data-admin-theme="dark"] input,
+.admin-shell[data-admin-theme="dark"] select,
+.admin-shell[data-admin-theme="dark"] textarea {
+  border-color: #40536c;
+  background-color: #07182a;
+  color: #f8fafc;
+}
+
+.admin-shell[data-admin-theme="dark"] input::placeholder,
+.admin-shell[data-admin-theme="dark"] textarea::placeholder {
+  color: #71839a;
+}
+
+.admin-shell[data-admin-theme="dark"] input[type="checkbox"],
+.admin-shell[data-admin-theme="dark"] input[type="radio"] {
+  accent-color: var(--rr-gold-400);
+}
+
+.admin-shell[data-admin-theme="dark"] .text-red-700 {
+  color: #fca5a5;
+}
+
+.admin-shell[data-admin-theme="dark"] .border-red-300 {
+  border-color: rgb(248 113 113 / 55%);
+}
+
+.admin-shell[data-admin-theme="dark"] .text-amber-700 {
+  color: #fcd34d;
+}
+
+.admin-shell[data-admin-theme="dark"] a:hover,
+.admin-shell[data-admin-theme="dark"] button:hover:not(:disabled) {
+  filter: brightness(1.22);
+  transform: translateY(-1px);
+}
+
+.admin-shell[data-admin-theme="dark"] button:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px rgb(255 212 111 / 20%);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   a,
   button,

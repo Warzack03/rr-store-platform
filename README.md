@@ -1,9 +1,9 @@
 # Rising Raimon Store Platform
 
-Base técnica de la tienda independiente de Rising Raimon. Las fases 1 a 3
-incluyen la aplicación Next.js, el sistema visual, la seguridad base, el modelo
-de datos y el catálogo público. La administración, el carrito, el checkout y el
-resto de lógica ecommerce se implementarán en fases posteriores.
+Plataforma de la tienda independiente de Rising Raimon. Las fases 1 a 4 incluyen
+la aplicación Next.js, el sistema visual, el modelo de datos, el catálogo público
+y el backoffice protegido. El carrito, el checkout y el resto de lógica ecommerce
+se implementarán en fases posteriores.
 
 ## Requisitos
 
@@ -20,7 +20,8 @@ resto de lógica ecommerce se implementarán en fases posteriores.
 3. Instala dependencias con `npm install`.
 4. Aplica las migraciones con `npm run db:migrate:dev`.
 5. Carga la configuración mínima con `npm run db:seed`.
-6. Arranca con `npm run dev` y abre `http://localhost:3000`.
+6. Define un `AUTH_SECRET` aleatorio de al menos 32 caracteres.
+7. Arranca con `npm run dev` y abre `http://localhost:3000`.
 
 El health está en `GET /api/health`. Sin `DATABASE_URL`, la aplicación responde
 correctamente e indica que la base no está configurada. Con la variable definida,
@@ -76,6 +77,21 @@ Remove-Item Env:ADMIN_INITIAL_EMAIL, Env:ADMIN_INITIAL_PASSWORD
 La contraseña debe tener entre 12 y 128 caracteres, se guarda con Argon2id y nunca
 se imprime. Después de crear la cuenta, elimina esas variables del entorno.
 
+## Administración
+
+El acceso está en `/admin/login`. El primer inicio muestra el secreto y el QR para
+configurar una aplicación TOTP; tras validarlo se muestran una única vez ocho
+códigos de recuperación. La sesión dura como máximo ocho horas y se invalida si
+se desactiva la cuenta o cambia su `sessionVersion`.
+
+Desde el panel se administran drops, productos, tallas, guías de tallas y medios.
+También incluye duplicado, archivado, vista previa privada, precios y suplementos
+por drop, y un registro de auditoría de solo lectura. Los pedidos aparecen en el
+dashboard únicamente como métricas: sus operaciones pertenecen a fases posteriores.
+
+Las imágenes aceptadas son JPG, PNG y WebP de hasta 8 MB. El tipo se valida por el
+contenido del archivo; no se permite SVG ni eliminar un medio que esté en uso.
+
 ## Comprobaciones
 
 ```bash
@@ -94,6 +110,7 @@ npm run catalog:verify -- http://127.0.0.1:3000
 | --- | --- | --- |
 | `STORE_ENV` | Sí en deploy | `local`, `beta` o `production`. Beta y local no se indexan. |
 | `SITE_URL` | Sí en deploy | Origen canónico del entorno. |
+| `AUTH_SECRET` | Sí | Secreto aleatorio de 32 caracteres o más para sesiones y cifrado; distinto por entorno. |
 | `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación; pool máximo de 5 conexiones. |
 | `SHADOW_DATABASE_URL` | En migraciones dev | Base vacía y distinta usada por Prisma Migrate. |
 | `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy. |
@@ -141,5 +158,5 @@ prisma/seed.ts       configuración inicial idempotente
 scripts/             alta inicial y verificación de BBDD
 ```
 
-La Fase 4 será la autenticación y administración del catálogo, tras una nueva
-instrucción y revisión de su documentación específica.
+La Fase 4 implementa la autenticación y administración completa del catálogo. No
+incluye carrito, checkout, cupones ni operaciones sobre pedidos.

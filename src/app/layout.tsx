@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   description:
     "La tienda oficial de Rising Raimon. Equipaciones y prendas del club.",
   applicationName: "Tienda Rising Raimon",
+  icons: {
+    icon: [{ url: "/brand/escudo-rising-raimon.webp", type: "image/webp" }],
+    apple: "/brand/escudo-rising-raimon.webp",
+  },
   robots: {
     index: shouldIndex,
     follow: shouldIndex,

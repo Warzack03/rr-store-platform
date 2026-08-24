@@ -1,11 +1,39 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
 import { getPrismaClient } from "@/server/db/client";
 
 const currentStaticPaths = new Set(["/", "/productos", "/carrito"]);
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    if (
+      request.nextUrl.pathname === "/admin/login" ||
+      request.nextUrl.pathname === "/admin/2fa"
+    ) {
+      return NextResponse.next();
+    }
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    const admin = await getPrismaClient().adminUser.findUnique({
+      where: { id: session.user.id },
+      select: { isActive: true, sessionVersion: true, totpEnabled: true },
+    });
+    if (
+      !admin?.isActive ||
+      !admin.totpEnabled ||
+      admin.sessionVersion !== session.user.sessionVersion
+    ) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (
     (request.method !== "GET" && request.method !== "HEAD") ||
     currentStaticPaths.has(request.nextUrl.pathname)
@@ -38,6 +66,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|admin|media|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|brand|.*\\.(?:jpg|jpeg|png|webp|gif|svg|ico|css|js|map|woff2?)$).*)",
+    "/((?!api|media|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|brand|.*\\.(?:jpg|jpeg|png|webp|gif|svg|ico|css|js|map|woff2?)$).*)",
   ],
 };

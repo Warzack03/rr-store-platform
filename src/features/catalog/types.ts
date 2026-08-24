@@ -1,5 +1,4 @@
 import type {
-  BundleComponentRole,
   CustomizationType,
   ProductType,
 } from "@/generated/prisma/enums";
@@ -60,7 +59,7 @@ export type ProductCustomizationView = {
 
 export type BundleComponentView = {
   id: string;
-  role: BundleComponentRole;
+  label: string;
   name: string;
   sizes: ProductSizeView[];
   customizations: ProductCustomizationView[];

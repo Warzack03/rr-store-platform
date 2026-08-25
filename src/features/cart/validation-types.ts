@@ -5,9 +5,28 @@ export type ValidatedCartLine = {
   productId: string;
   slug: string;
   name: string;
+  productType: "SIMPLE" | "BUNDLE";
   quantity: number;
   image: { url: string; altText: string } | null;
   selections: string[];
+  sizeLabel: string | null;
+  customizations: Array<{
+    type: "NAME" | "NUMBER";
+    label: string;
+    value: string;
+    surchargeCents: number;
+  }>;
+  components: Array<{
+    label: string;
+    productName: string;
+    sizeLabel: string;
+    customizations: Array<{
+      type: "NAME" | "NUMBER";
+      label: string;
+      value: string;
+      surchargeCents: number;
+    }>;
+  }>;
   unitBasePriceCents: number;
   unitCustomizationCents: number;
   unitTotalCents: number;

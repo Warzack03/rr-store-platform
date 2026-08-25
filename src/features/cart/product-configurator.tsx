@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -12,6 +13,7 @@ import type {
 
 import { useCart } from "./cart-provider";
 import {
+  createCartLineId,
   normalizeDorsal,
   normalizeName,
   type CartCustomizationSelection,
@@ -59,7 +61,10 @@ export function ProductConfigurator({ product }: { product: ConfigurableProduct 
     ),
   );
   const [quantity, setQuantity] = useState(1);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    showCartLink: boolean;
+  } | null>(null);
   const editingLine = editLineId
     ? cart.lines.find(
         (line) => line.id === editLineId && line.productId === product.id,
@@ -150,9 +155,12 @@ export function ProductConfigurator({ product }: { product: ConfigurableProduct 
 
   function submit() {
     const error = validate();
-    if (error) { setMessage(error); return; }
+    if (error) {
+      setMessage({ text: error, showCartLink: false });
+      return;
+    }
     const line: CartLine = {
-      id: editingLine?.id ?? crypto.randomUUID(),
+      id: editingLine?.id ?? createCartLineId(),
       dropId: product.drop.id,
       dropProductId: product.drop.dropProductId,
       productId: product.id,
@@ -177,11 +185,12 @@ export function ProductConfigurator({ product }: { product: ConfigurableProduct 
       return;
     }
     const { replacedDrop } = addLine(line);
-    setMessage(
-      replacedDrop
+    setMessage({
+      text: replacedDrop
         ? "Hemos sustituido el carrito anterior porque pertenecía a otro drop."
         : "Producto añadido al carrito.",
-    );
+      showCartLink: true,
+    });
   }
 
   if (product.drop.state !== "AVAILABLE" || !product.drop.publicPrice) return null;
@@ -221,7 +230,7 @@ export function ProductConfigurator({ product }: { product: ConfigurableProduct 
         <div><p className="text-sm text-white/58">Cantidad</p><div className="mt-2 inline-flex border border-white/20"><button aria-label="Reducir cantidad" className="size-11 text-xl text-white hover:bg-white/10" onClick={() => setQuantity((value) => Math.max(1, value - 1))} type="button">−</button><span className="inline-flex min-w-11 items-center justify-center font-bold text-white">{quantity}</span><button aria-label="Aumentar cantidad" className="size-11 text-xl text-white hover:bg-white/10" onClick={() => setQuantity((value) => Math.min(20, value + 1))} type="button">+</button></div></div>
         <div className="text-right"><p className="text-sm text-white/58">Total</p><p className="mt-1 text-3xl font-bold text-white">{formatMoney(unitTotal * quantity)}</p>{customizationCents > 0 ? <p className="text-xs text-brand-gold">Incluye {formatMoney(customizationCents * quantity)} en personalización</p> : null}</div>
       </div>
-      {message ? <p className="border border-brand-gold/35 bg-brand-gold/10 px-4 py-3 text-sm text-white" role="status">{message}</p> : null}
+      {message ? <div className="flex items-center justify-between gap-4 border border-brand-gold/35 bg-brand-gold/10 px-4 py-3 text-sm text-white" role="status"><span>{message.text}</span>{message.showCartLink ? <Link className="shrink-0 font-heading font-bold uppercase tracking-wide text-brand-gold underline underline-offset-4 hover:text-white" href="/carrito">Ver carrito →</Link> : null}</div> : null}
       <button className="sticky bottom-3 z-20 inline-flex min-h-14 w-full items-center justify-center border border-brand-gold bg-brand-gold px-6 font-heading text-lg font-bold uppercase tracking-[0.1em] text-brand-panel shadow-xl hover:-translate-y-0.5 hover:bg-[#ffe19a]" onClick={submit} type="button">
         {editingLine ? "Guardar cambios" : `Añadir al carrito · ${formatMoney(unitTotal * quantity)}`}
       </button>

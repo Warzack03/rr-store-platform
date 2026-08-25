@@ -17,7 +17,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api", "/carrito"],
+        disallow: ["/admin", "/api", "/carrito", "/checkout", "/pedido"],
       },
     ],
     host: env.SITE_URL,

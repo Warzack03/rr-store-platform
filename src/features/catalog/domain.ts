@@ -68,11 +68,19 @@ export function formatMoney(priceCents: number) {
 }
 
 export function formatDropDate(value: string | Date) {
-  return new Intl.DateTimeFormat("es-ES", {
-    dateStyle: "long",
-    timeStyle: "short",
+  const parts = new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
     timeZone: "Europe/Madrid",
-  }).format(typeof value === "string" ? new Date(value) : value);
+  }).formatToParts(typeof value === "string" ? new Date(value) : value);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((candidate) => candidate.type === type)?.value ?? "";
+
+  return `${part("day")} de ${part("month")} de ${part("year")}, ${part("hour")}:${part("minute")}`;
 }
 
 export const dropStateLabels: Record<PublicDropState, string> = {

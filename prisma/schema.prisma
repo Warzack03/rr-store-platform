@@ -358,6 +358,7 @@ model Coupon {
 
 model CheckoutAttempt {
   id                      String                @id @default(cuid()) @db.VarChar(30)
+  publicToken             String                @unique @db.VarChar(128)
   dropId                  String                @db.VarChar(30)
   status                  CheckoutAttemptStatus @default(CREATED)
   email                   String                @db.VarChar(320)
@@ -437,6 +438,7 @@ model OrderItem {
   productTypeSnapshot    ProductType
   productNameSnapshot    String                   @db.VarChar(191)
   productSlugSnapshot    String                   @db.VarChar(191)
+  sizeLabelSnapshot      String?                  @db.VarChar(50)
   unitBasePriceCents     Int                      @db.UnsignedInt
   unitCustomizationCents Int                      @default(0) @db.UnsignedInt
   unitTotalCents         Int                      @db.UnsignedInt

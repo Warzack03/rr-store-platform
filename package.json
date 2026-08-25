@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/features/catalog/domain.test.ts src/features/cart/domain.test.ts src/features/admin/auth/rate-limit.test.ts",
+    "test": "tsx --test src/features/catalog/domain.test.ts src/features/cart/domain.test.ts src/features/checkout/domain.test.ts src/features/admin/auth/rate-limit.test.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "db:migrate:dev": "prisma migrate dev",
@@ -40,6 +40,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "sharp": "^0.35.3",
+    "stripe": "^22.5.0",
     "zod": "4.4.3"
   },
   "devDependencies": {

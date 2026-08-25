@@ -36,6 +36,7 @@ function validateCustomizations(
 ) {
   const sanitized: CartCustomizationSelection[] = [];
   const labels: string[] = [];
+  const snapshots: Array<{ type: "NAME" | "NUMBER"; label: string; value: string; surchargeCents: number }> = [];
   let surchargeCents = 0;
   const seen = new Set<string>();
 
@@ -66,9 +67,10 @@ function validateCustomizations(
     }
     sanitized.push({ customizationId: customization.id, value });
     labels.push(`${customization.label}: ${value}`);
+    snapshots.push({ type: customization.type, label: customization.label, value, surchargeCents: surcharge });
     surchargeCents += surcharge;
   }
-  return { sanitized, labels, surchargeCents };
+  return { sanitized, labels, snapshots, surchargeCents };
 }
 
 const emptyValidatedCart = (issues: string[] = []): ValidatedCart => ({
@@ -166,6 +168,9 @@ export async function validateCart(input: StoredCart): Promise<ValidatedCart> {
     let sanitizedCustomizations: CartCustomizationSelection[] = [];
     const sanitizedComponents: CartLine["components"] = [];
     const selections: string[] = [];
+    let sizeLabel: string | null = null;
+    let customizationSnapshots: ValidatedCartLine["customizations"] = [];
+    const componentSnapshots: ValidatedCartLine["components"] = [];
     let customizationCents = 0;
     let valid = true;
 
@@ -176,6 +181,7 @@ export async function validateCart(input: StoredCart): Promise<ValidatedCart> {
       if (!size || line.components.length > 0) valid = false;
       else {
         sanitizedSizeId = size.sizeId;
+        sizeLabel = size.size.label;
         selections.push(`Talla: ${size.size.label}`);
         const custom = validateCustomizations(
           line.customizations,
@@ -187,6 +193,7 @@ export async function validateCart(input: StoredCart): Promise<ValidatedCart> {
         else {
           sanitizedCustomizations = custom.sanitized;
           selections.push(...custom.labels);
+          customizationSnapshots = custom.snapshots;
           customizationCents += custom.surchargeCents;
         }
       }
@@ -218,6 +225,12 @@ export async function validateCart(input: StoredCart): Promise<ValidatedCart> {
           sizeId: size.sizeId,
           customizations: custom.sanitized,
         });
+        componentSnapshots.push({
+          label: component.label,
+          productName: component.componentProduct.name,
+          sizeLabel: size.size.label,
+          customizations: custom.snapshots,
+        });
         selections.push(
           `${component.label} · ${component.componentProduct.name} · Talla ${size.size.label}`,
           ...custom.labels.map((label) => `${component.label} · ${label}`),
@@ -247,11 +260,15 @@ export async function validateCart(input: StoredCart): Promise<ValidatedCart> {
       productId: record.product.id,
       slug: record.product.slug,
       name: record.product.name,
+      productType: record.product.type,
       quantity: sanitizedLine.quantity,
       image: primary
         ? { url: mediaUrl(primary.storageKey), altText: record.product.name }
         : null,
       selections,
+      sizeLabel,
+      customizations: customizationSnapshots,
+      components: componentSnapshots,
       unitBasePriceCents: record.priceCents,
       unitCustomizationCents: customizationCents,
       unitTotalCents,

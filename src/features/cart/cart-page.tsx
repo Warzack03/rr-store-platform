@@ -172,8 +172,8 @@ export function CartPageContent() {
             <div className="flex justify-between gap-4 text-white/50"><dt>Envío</dt><dd>Se calcula después</dd></div>
             <div className="flex justify-between gap-4 border-t border-white/12 pt-4 text-xl font-bold text-white"><dt>Total</dt><dd>{formatMoney(validated?.totalCents ?? 0)}</dd></div>
           </dl>
-          <button className="mt-6 min-h-14 w-full cursor-not-allowed border border-white/15 bg-white/8 px-5 font-heading text-lg font-bold uppercase tracking-wide text-white/45" disabled type="button">Continuar con el pedido</button>
-          <p className="mt-3 text-center text-xs leading-5 text-white/45">El pago y el envío se habilitarán en el siguiente paso.</p>
+          {!loading && !requestError && validated?.lines.length ? <Link className="mt-6 inline-flex min-h-14 w-full items-center justify-center border border-brand-gold bg-brand-gold px-5 font-heading text-lg font-bold uppercase tracking-wide text-brand-panel hover:bg-[#ffe19a]" href="/checkout">Continuar con el pedido</Link> : <button className="mt-6 min-h-14 w-full cursor-not-allowed border border-white/15 bg-white/8 px-5 font-heading text-lg font-bold uppercase tracking-wide text-white/45" disabled type="button">Continuar con el pedido</button>}
+          <p className="mt-3 text-center text-xs leading-5 text-white/45">El envío se confirma antes de acceder al pago seguro.</p>
         </aside>
       </div>
     </main>

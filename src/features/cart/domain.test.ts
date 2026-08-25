@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { calculateDiscount, clampQuantity, couponEligibilityError, isDropOpen, isValidDorsal, lineSignature, normalizeDorsal, normalizeName, type CartLine, type CouponRule } from "./domain";
+import { calculateDiscount, clampQuantity, couponEligibilityError, createCartLineId, isDropOpen, isValidDorsal, lineSignature, normalizeDorsal, normalizeName, type CartLine, type CouponRule } from "./domain";
 
 const baseLine: CartLine = { id: "line-1", dropId: "drop-1", dropProductId: "drop-product-1", productId: "product-1", quantity: 1, sizeId: "size-m", customizations: [], components: [] };
 
@@ -22,6 +22,13 @@ test("limita la cantidad de cada línea", () => {
   assert.equal(clampQuantity(-2), 1);
   assert.equal(clampQuantity(4.9), 4);
   assert.equal(clampQuantity(200), 20);
+});
+
+test("genera identificadores de carrito compatibles con el cliente", () => {
+  const first = createCartLineId();
+  const second = createCartLineId();
+  assert.ok(first.length > 10 && first.length <= 100);
+  assert.notEqual(first, second);
 });
 
 test("fusiona solo configuraciones idénticas sin depender del orden", () => {

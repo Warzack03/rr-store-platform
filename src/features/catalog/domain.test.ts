@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   comparePublicDrops,
+  formatDropDate,
   getPublicDropState,
   getPublicPrice,
 } from "./domain";
@@ -45,5 +46,12 @@ test("ordena disponible, próximo y finalizado antes de aplicar fechas", () => {
   assert.deepEqual(
     drops.sort(comparePublicDrops).map(({ state }) => state),
     ["AVAILABLE", "UPCOMING", "ENDED"],
+  );
+});
+
+test("formatea las fechas de drop de forma estable en la zona de Madrid", () => {
+  assert.equal(
+    formatDropDate("2026-09-14T13:11:00.000Z"),
+    "14 de septiembre de 2026, 15:11",
   );
 });

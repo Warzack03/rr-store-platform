@@ -19,6 +19,8 @@ const databaseUrlSchema = z
   });
 
 const authSecretSchema = z.string().min(32);
+const stripeSecretKeySchema = z.string().trim().startsWith("sk_");
+const stripeWebhookSecretSchema = z.string().trim().startsWith("whsec_");
 
 const parsedRuntimeEnvironment = runtimeEnvironmentSchema.safeParse({
   STORE_ENV: process.env.STORE_ENV,
@@ -55,5 +57,21 @@ export function getAuthSecret(): string {
     throw new Error("La configuración de autenticación no es válida.");
   }
 
+  return parsed.data;
+}
+
+export function getStripeSecretKey(): string | null {
+  const value = process.env.STRIPE_SECRET_KEY;
+  if (!value) return null;
+  const parsed = stripeSecretKeySchema.safeParse(value);
+  if (!parsed.success) throw new Error("La configuración de Stripe no es válida.");
+  return parsed.data;
+}
+
+export function getStripeWebhookSecret(): string | null {
+  const value = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!value) return null;
+  const parsed = stripeWebhookSecretSchema.safeParse(value);
+  if (!parsed.success) throw new Error("La configuración del webhook de Stripe no es válida.");
   return parsed.data;
 }

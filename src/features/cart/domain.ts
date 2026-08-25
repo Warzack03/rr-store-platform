@@ -35,6 +35,14 @@ export const emptyCart = (): StoredCart => ({
   couponCode: null,
 });
 
+export function createCartLineId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `line-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, " ").toLocaleUpperCase("es-ES");
 }

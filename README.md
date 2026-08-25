@@ -82,6 +82,21 @@ Las páginas públicas se revalidan cada minuto. Hasta que exista el backoffice 
 la Fase 4, el catálogo se carga directamente en BBDD; no se incluyen productos de
 demostración en el seed oficial.
 
+## Stripe test local
+
+Configura `STRIPE_SECRET_KEY` con una clave `sk_test_...`. Para recibir eventos
+locales, usa Stripe CLI y copia el secreto `whsec_...` mostrado a
+`STRIPE_WEBHOOK_SECRET`:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+El checkout usa una sesión alojada de 30 minutos. El retorno del navegador no
+crea el pedido: solo el webhook firmado puede confirmar el pago y generar un
+único pedido. Para una compra test puede utilizarse la tarjeta `4242 4242 4242
+4242`, fecha futura y cualquier CVC de tres cifras.
+
 ## Primer administrador
 
 La creación inicial es un comando explícito y solo funciona mientras no exista
@@ -134,6 +149,8 @@ npm run catalog:verify -- http://127.0.0.1:3000
 | `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación; pool máximo de 5 conexiones. |
 | `SHADOW_DATABASE_URL` | En migraciones dev | Base vacía y distinta usada por Prisma Migrate. |
 | `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy. |
+| `STRIPE_SECRET_KEY` | Para checkout | Clave secreta de Stripe; `sk_test_...` en local y beta. |
+| `STRIPE_WEBHOOK_SECRET` | Para webhook | Secreto de firma del endpoint o Stripe CLI. |
 | `ADMIN_INITIAL_EMAIL` | Solo alta inicial | Email del primer administrador. |
 | `ADMIN_INITIAL_PASSWORD` | Solo alta inicial | Contraseña temporal de entrada al comando de alta. |
 

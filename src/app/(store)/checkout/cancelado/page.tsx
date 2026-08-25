@@ -1,0 +1,5 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = { title: "Pago no completado", robots: { index: false, follow: false } };
+export default function CancelledCheckoutPage() { return <main className="mx-auto flex min-h-[62vh] max-w-2xl items-center px-5 py-16 text-center"><div className="w-full brand-panel p-8 sm:p-12"><p className="font-heading text-sm font-bold uppercase tracking-widest text-brand-gold">Pago cancelado</p><h1 className="mt-3 font-display text-6xl text-white">El pago no se ha completado</h1><p className="mt-5 text-white/68">Tu carrito sigue guardado. Puedes revisar los datos e intentarlo de nuevo.</p><div className="mt-8 flex justify-center gap-3"><Link className="border border-brand-gold bg-brand-gold px-5 py-3 font-heading font-bold uppercase text-brand-panel" href="/checkout">Volver al checkout</Link><Link className="border border-white/20 px-5 py-3 font-heading font-bold uppercase text-white" href="/carrito">Ver carrito</Link></div></div></main>; }

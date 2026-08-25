@@ -46,6 +46,26 @@ reset elimina todos los datos y solo debe emplearse de forma consciente en local
 El seed crea únicamente `StoreSettings` y los métodos de envío `HOME` y `PICKUP`.
 No crea catálogo, pedidos, cupones, tallas, drops ni datos de demostración.
 
+### Catálogo local de demostración
+
+Con `STORE_ENV=local` se puede cargar un catálogo idempotente para probar la
+tienda sin mezclarlo con el seed estructural:
+
+```bash
+npm run demo:seed
+npm run demo:clean
+```
+
+El primer comando crea tres drops (activo, próximo y finalizado), cuatro
+productos —incluido un pack de tres componentes—, tallas, personalizaciones,
+precios y seis cupones con reglas distintas. Al repetirlo actualiza los datos y
+conserva las imágenes asignadas desde el administrador.
+
+La limpieza solo reconoce los identificadores reservados del catálogo demo. Se
+detiene si esos registros ya participan en pedidos, checkout o catálogo ajeno;
+también elimina los medios usados exclusivamente por el demo. Las tallas
+genéricas se conservan para poder reutilizarlas en el catálogo definitivo.
+
 ## Catálogo público
 
 - `/` muestra el drop disponible o próximo y los drops anteriores.

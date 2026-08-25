@@ -1,3 +1,57 @@
-import Link from "next/link"; import { notFound } from "next/navigation";
-import { DropForm } from "@/features/admin/components/drop-form"; import { PageHeading } from "@/features/admin/components/page-heading"; import { getDropFormOptions } from "@/features/admin/server/drop-form-data"; import { getPrismaClient } from "@/server/db/client";
-export default async function EditDropPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ ok?: string; error?: string }> }) { const { id } = await params; const [drop, options, query] = await Promise.all([getPrismaClient().drop.findUnique({ where: { id }, include: { dropProducts: { orderBy: { sortOrder: "asc" }, include: { customizationPrices: true } } } }), getDropFormOptions(), searchParams]); if (!drop) notFound(); return <div className="space-y-6"><PageHeading title={drop.title} description="Fechas, publicación, productos, precios y personalización." /><Link className="inline-block rounded border border-slate-300 bg-white px-4 py-2 font-semibold" href={`/admin/drops/${drop.id}/preview`}>Abrir vista previa</Link><DropForm {...options} drop={drop} searchParams={query} /></div>; }
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+
+import { DropForm } from "@/features/admin/components/drop-form";
+import { PageHeading } from "@/features/admin/components/page-heading";
+import { getDropFormOptions } from "@/features/admin/server/drop-form-data";
+import { messageUrl } from "@/features/admin/server/shared";
+import { getPrismaClient } from "@/server/db/client";
+
+export default async function EditDropPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
+  const { id } = await params;
+  const [drop, options, query] = await Promise.all([
+    getPrismaClient().drop.findUnique({
+      where: { id },
+      include: {
+        dropProducts: {
+          orderBy: { sortOrder: "asc" },
+          include: { customizationPrices: true },
+        },
+      },
+    }),
+    getDropFormOptions(),
+    searchParams,
+  ]);
+  if (!drop) notFound();
+  if (drop.status === "PUBLISHED" && drop.endsAt && drop.endsAt <= new Date()) {
+    redirect(
+      messageUrl(
+        "/admin/drops",
+        "error",
+        "Los drops finalizados son de solo lectura.",
+      ),
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeading
+        title={drop.title}
+        description="Fechas, publicación, productos, precios y personalización."
+      />
+      <Link
+        className="inline-block rounded border border-slate-300 bg-white px-4 py-2 font-semibold"
+        href={`/admin/drops/${drop.id}/preview`}
+      >
+        Abrir vista previa
+      </Link>
+      <DropForm {...options} drop={drop} searchParams={query} />
+    </div>
+  );
+}

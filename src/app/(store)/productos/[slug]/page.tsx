@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { CatalogImage } from "@/features/catalog/components/catalog-image";
 import { Countdown } from "@/features/catalog/components/countdown";
 import { ProductCard } from "@/features/catalog/components/product-card";
 import { ProductGallery } from "@/features/catalog/components/product-gallery";
+import { ProductConfigurator } from "@/features/cart/product-configurator";
 import {
   dropStateLabels,
   formatDropDate,
@@ -14,11 +16,7 @@ import {
   getPublicProduct,
   getPublicProductSlugs,
 } from "@/features/catalog/server/catalog";
-import type {
-  CatalogProductDetail,
-  ProductCustomizationView,
-  ProductSizeView,
-} from "@/features/catalog/types";
+import type { CatalogProductDetail } from "@/features/catalog/types";
 import { env } from "@/lib/env";
 
 export const revalidate = 60;
@@ -77,77 +75,25 @@ export async function generateMetadata({
   };
 }
 
-function SizeList({ sizes }: { sizes: ProductSizeView[] }) {
-  if (sizes.length === 0) {
-    return <p className="text-sm text-white/58">Tallas pendientes de confirmar.</p>;
-  }
-
-  return (
-    <ul className="flex flex-wrap gap-2" aria-label="Tallas disponibles">
-      {sizes.map((size) => (
-        <li
-          key={size.id}
-          className="inline-flex min-h-11 min-w-12 items-center justify-center border border-white/22 bg-white/[0.035] px-3 font-heading text-base font-bold text-white"
-        >
-          {size.label}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function CustomizationList({
-  customizations,
-}: {
-  customizations: ProductCustomizationView[];
-}) {
-  if (customizations.length === 0) return null;
-
-  return (
-    <ul className="space-y-3">
-      {customizations.map((customization) => (
-        <li
-          key={customization.id}
-          className="flex items-start justify-between gap-5 border border-white/10 bg-white/[0.025] px-4 py-3"
-        >
-          <div>
-            <p className="font-heading text-lg font-bold uppercase tracking-wide text-white">
-              {customization.label}
-            </p>
-            <p className="mt-0.5 text-sm text-white/58">
-              {customization.type === "NAME"
-                ? `Hasta ${customization.maxLength ?? 12} caracteres`
-                : `Del ${String(customization.minNumber ?? 0).padStart(2, "0")} al ${String(customization.maxNumber ?? 99).padStart(2, "0")}`}
-            </p>
-          </div>
-          {customization.surchargeCents !== null ? (
-            <span className="shrink-0 font-semibold text-brand-gold">
-              +{formatMoney(customization.surchargeCents)}
-            </span>
-          ) : null}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function ProductStructuredData({ product }: { product: CatalogProductDetail }) {
   const productUrl = new URL(`/productos/${product.slug}`, env.SITE_URL).toString();
-  const offerPriceCents =
-    product.drop.publicPrice?.priceCents ?? product.drop.historicalPriceCents;
+  const drop = product.drop;
+  const offerPriceCents = drop
+    ? drop.publicPrice?.priceCents ?? drop.historicalPriceCents
+    : null;
   const offer =
-    product.drop.state !== "UPCOMING" && offerPriceCents !== null
+    drop && drop.state !== "UPCOMING" && offerPriceCents !== null
       ? {
           "@type": "Offer",
           url: productUrl,
           priceCurrency: "EUR",
           price: (offerPriceCents / 100).toFixed(2),
           availability:
-            product.drop.state === "AVAILABLE"
+            drop.state === "AVAILABLE"
               ? "https://schema.org/PreOrder"
               : "https://schema.org/Discontinued",
-          ...(product.drop.state === "AVAILABLE"
-            ? { priceValidUntil: product.drop.endsAt }
+          ...(drop.state === "AVAILABLE"
+            ? { priceValidUntil: drop.endsAt }
             : {}),
         }
       : undefined;
@@ -179,8 +125,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getPublicProduct(slug);
   if (!product) notFound();
 
-  const isUpcoming = product.drop.state === "UPCOMING";
-  const isAvailable = product.drop.state === "AVAILABLE";
+  const drop = product.drop;
+  const isUpcoming = drop?.state === "UPCOMING";
+  const isAvailable = drop?.state === "AVAILABLE";
 
   return (
     <>
@@ -191,7 +138,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           <div className="lg:sticky lg:top-28 lg:self-start">
             <p className="font-heading text-sm font-bold uppercase tracking-[0.2em] text-brand-gold">
-              {product.drop.title}
+              {drop?.title ?? "Catálogo Rising Raimon"}
             </p>
             <h1 className="mt-3 font-display text-6xl leading-[0.88] tracking-wide text-white sm:text-7xl">
               {product.name}
@@ -200,99 +147,61 @@ export default async function ProductPage({ params }: ProductPageProps) {
               {product.shortDescription}
             </p>
 
-            <div className="mt-7 border-y border-white/12 py-6">
+            {drop ? <div className="mt-7 border-y border-white/12 py-6">
               <p className="font-heading text-sm font-bold uppercase tracking-[0.17em] text-white/58">
-                {dropStateLabels[product.drop.state]}
+                {dropStateLabels[drop.state]}
               </p>
               {isUpcoming || isAvailable ? (
                 <div className="mt-4">
                   <Countdown
                     state={isUpcoming ? "UPCOMING" : "AVAILABLE"}
-                    target={isUpcoming ? product.drop.startsAt : product.drop.endsAt}
+                    target={isUpcoming ? drop.startsAt : drop.endsAt}
                     initialNow={new Date().toISOString()}
                   />
                 </div>
               ) : (
                 <p className="mt-2 text-sm text-white/62">
-                  Este drop finalizó el {formatDropDate(product.drop.endsAt)}.
+                  Este drop finalizó el {formatDropDate(drop.endsAt)}.
                 </p>
               )}
-            </div>
+            </div> : <div className="mt-7 border-y border-white/12 py-6"><p className="font-heading text-sm font-bold uppercase tracking-[0.17em] text-white/58">No disponible actualmente</p><p className="mt-2 text-sm leading-6 text-white/62">Este producto forma parte del catálogo, pero no está incluido en ningún drop disponible o programado.</p></div>}
 
             <div className="mt-7">
-              {product.drop.publicPrice ? (
+              {drop?.publicPrice ? (
                 <div className="flex items-baseline gap-3">
                   <p className="text-3xl font-bold text-white">
-                    {formatMoney(product.drop.publicPrice.priceCents)}
+                    {formatMoney(drop.publicPrice.priceCents)}
                   </p>
-                  {product.drop.publicPrice.compareAtPriceCents ? (
+                  {drop.publicPrice.compareAtPriceCents ? (
                     <p className="text-lg text-white/45 line-through">
-                      {formatMoney(product.drop.publicPrice.compareAtPriceCents)}
+                      {formatMoney(drop.publicPrice.compareAtPriceCents)}
                     </p>
                   ) : null}
                 </div>
-              ) : product.drop.historicalPriceCents !== null ? (
+              ) : drop && drop.historicalPriceCents !== null ? (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/48">
                     Precio durante el drop
                   </p>
                   <p className="mt-1 text-xl font-semibold text-white/72">
-                    {formatMoney(product.drop.historicalPriceCents)}
+                    {formatMoney(drop.historicalPriceCents)}
                   </p>
                 </div>
               ) : (
                 <p className="font-heading text-lg font-semibold uppercase tracking-wide text-white/68">
-                  El precio estará disponible cuando abra el drop
+                  {drop?.state === "UPCOMING" ? "El precio estará disponible cuando abra el drop" : "Producto no disponible actualmente"}
                 </p>
               )}
               <p className="mt-2 text-sm text-white/50">IVA incluido.</p>
             </div>
 
-            {product.type === "SIMPLE" ? (
-              <section aria-labelledby="tallas" className="mt-9">
-                <h2
-                  id="tallas"
-                  className="font-heading text-xl font-bold uppercase tracking-wide text-white"
-                >
-                  Tallas
-                </h2>
-                <div className="mt-3">
-                  <SizeList sizes={product.sizes} />
-                </div>
-              </section>
-            ) : (
-              <section aria-labelledby="componentes" className="mt-9">
-                <h2
-                  id="componentes"
-                  className="font-heading text-xl font-bold uppercase tracking-wide text-white"
-                >
-                  Elige cada producto del pack
-                </h2>
-                <div className="mt-4 space-y-6">
-                  {product.bundleComponents.map((component) => (
-                    <div
-                      key={component.id}
-                      className="border-l-2 border-brand-gold/65 pl-4"
-                    >
-                      <h3 className="font-heading text-lg font-bold uppercase tracking-wide text-brand-gold">
-                        {component.label}
-                      </h3>
-                      <p className="mt-1 text-sm text-white/58">{component.name}</p>
-                      <div className="mt-3">
-                        <SizeList sizes={component.sizes} />
-                      </div>
-                      {component.customizations.length > 0 ? (
-                        <div className="mt-4">
-                          <CustomizationList
-                            customizations={component.customizations}
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
+            {drop ? <Suspense
+              fallback={
+                <div className="mt-9 h-44 animate-pulse border border-white/10 bg-white/[0.025]" />
+              }
+            >
+              <ProductConfigurator product={{ ...product, drop }} />
+            </Suspense> : null}
 
             {product.sizeGuide ? (
               <details className="mt-6 border border-white/12 bg-white/[0.025]">
@@ -309,20 +218,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   </div>
                 </div>
               </details>
-            ) : null}
-
-            {product.type === "SIMPLE" && product.customizations.length > 0 ? (
-              <section aria-labelledby="personalizacion" className="mt-9">
-                <h2
-                  id="personalizacion"
-                  className="font-heading text-xl font-bold uppercase tracking-wide text-white"
-                >
-                  Personalización
-                </h2>
-                <div className="mt-3">
-                  <CustomizationList customizations={product.customizations} />
-                </div>
-              </section>
             ) : null}
 
             <p className="mt-7 text-sm leading-6 text-white/60">

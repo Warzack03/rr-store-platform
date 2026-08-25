@@ -64,7 +64,7 @@ export default async function HomePage() {
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink
-                  href={`/productos#drop-${featuredDrop.slug ?? featuredDrop.id}`}
+                  href="/productos"
                 >
                   Ver productos
                 </ButtonLink>

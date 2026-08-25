@@ -88,7 +88,7 @@ async function loadPublishedDrops() {
 
 function toProductCard(
   dropProduct: Awaited<ReturnType<typeof loadPublishedDrops>>[number]["dropProducts"][number],
-  drop: { title: string; state: CatalogDrop["state"] },
+  drop: { title: string; state: CatalogDrop["state"]; startsAt?: Date; endsAt?: Date },
 ): CatalogProductCard {
   const primaryImage = dropProduct.product.images[0];
   const image = dropProduct.marketingMedia
@@ -109,6 +109,12 @@ function toProductCard(
     image,
     dropTitle: drop.title,
     dropState: drop.state,
+    availabilityDate:
+      drop.state === "AVAILABLE"
+        ? drop.endsAt?.toISOString() ?? null
+        : drop.state === "UPCOMING"
+          ? drop.startsAt?.toISOString() ?? null
+          : null,
     price: getPublicPrice(
       drop.state,
       dropProduct.priceCents,
@@ -142,7 +148,12 @@ export const getPublicCatalog = cache(async (): Promise<CatalogDrop[]> => {
           ? toCatalogMedia(drop.heroMedia, drop.title, drop.heroAlt)
           : null,
         products: drop.dropProducts.map((dropProduct) =>
-          toProductCard(dropProduct, { title: drop.title, state }),
+          toProductCard(dropProduct, {
+            title: drop.title,
+            state,
+            startsAt: drop.startsAt!,
+            endsAt: drop.endsAt!,
+          }),
         ),
       };
 
@@ -164,6 +175,87 @@ export const getPublicCatalog = cache(async (): Promise<CatalogDrop[]> => {
         },
       ),
     );
+});
+
+async function loadPublishedProducts() {
+  return prisma.product.findMany({
+    where: publicProductWhere,
+    orderBy: [{ name: "asc" }, { createdAt: "asc" }],
+    include: {
+      images: {
+        orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }],
+        include: { mediaAsset: true },
+      },
+      dropProducts: {
+        where: {
+          isVisible: true,
+          drop: {
+            status: "PUBLISHED",
+            archivedAt: null,
+            startsAt: { not: null },
+            endsAt: { not: null },
+          },
+        },
+        include: { marketingMedia: true, drop: true },
+      },
+    },
+  });
+}
+
+export const getPublicProducts = cache(async (): Promise<CatalogProductCard[]> => {
+  const now = new Date();
+  const products = await loadPublishedProducts();
+  const cards = products.map((product) => {
+    const dropProducts = product.dropProducts
+      .flatMap((dropProduct) => {
+        if (!dropProduct.drop.startsAt || !dropProduct.drop.endsAt) return [];
+        const state = getPublicDropState(
+          { startsAt: dropProduct.drop.startsAt, endsAt: dropProduct.drop.endsAt },
+          now,
+        );
+        return [{ ...dropProduct, state }];
+      })
+      .sort((left, right) =>
+        comparePublicDrops(
+          { state: left.state, startsAt: left.drop.startsAt!, endsAt: left.drop.endsAt!, isPrimary: left.drop.isPrimary },
+          { state: right.state, startsAt: right.drop.startsAt!, endsAt: right.drop.endsAt!, isPrimary: right.drop.isPrimary },
+        ),
+      );
+    const current = dropProducts.find((item) => item.state !== "ENDED");
+    const primaryImage = product.images[0];
+    const selectedImage = current?.marketingMedia;
+    const image = selectedImage
+      ? toCatalogMedia(selectedImage, product.name)
+      : primaryImage
+        ? toCatalogMedia(primaryImage.mediaAsset, product.name, primaryImage.altText)
+        : null;
+    return {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      type: product.type,
+      image,
+      dropTitle: current?.drop.title ?? null,
+      dropState: current?.state ?? "UNAVAILABLE",
+      availabilityDate: current
+        ? (current.state === "AVAILABLE" ? current.drop.endsAt : current.drop.startsAt)?.toISOString() ?? null
+        : null,
+      price: current
+        ? getPublicPrice(current.state, current.priceCents, current.compareAtPriceCents)
+        : null,
+    } satisfies CatalogProductCard;
+  });
+  const stateOrder: Record<CatalogProductCard["dropState"], number> = {
+    AVAILABLE: 0,
+    UPCOMING: 1,
+    UNAVAILABLE: 2,
+    ENDED: 2,
+  };
+  return cards.sort(
+    (left, right) =>
+      stateOrder[left.dropState] - stateOrder[right.dropState] ||
+      left.name.localeCompare(right.name, "es"),
+  );
 });
 
 function sortSizes(
@@ -291,12 +383,9 @@ export const getPublicProduct = cache(
         ),
       );
     const selectedDropProduct = availableDropProducts[0];
-    if (!selectedDropProduct?.drop.startsAt || !selectedDropProduct.drop.endsAt) {
-      return null;
-    }
 
     const surchargeByCustomization = new Map(
-      selectedDropProduct.customizationPrices.map((configuration) => [
+      (selectedDropProduct?.customizationPrices ?? []).map((configuration) => [
         `${configuration.productCustomizationId}:${configuration.bundleComponentId ?? "product"}`,
         configuration.surchargeCents,
       ]),
@@ -306,7 +395,7 @@ export const getPublicProduct = cache(
         `${customizationId}:${componentId ?? "product"}`,
       );
     const publicSurcharge = (customizationId: string, componentId?: string) => {
-      if (selectedDropProduct.publicState !== "AVAILABLE") return null;
+      if (selectedDropProduct?.publicState !== "AVAILABLE") return null;
       return (
         surchargeByCustomization.get(
           `${customizationId}:${componentId ?? "product"}`,
@@ -314,7 +403,8 @@ export const getPublicProduct = cache(
       );
     };
 
-    const relatedDropProducts = await prisma.dropProduct.findMany({
+    const relatedDropProducts = selectedDropProduct
+      ? await prisma.dropProduct.findMany({
       where: {
         dropId: selectedDropProduct.dropId,
         productId: { not: product.id },
@@ -333,7 +423,8 @@ export const getPublicProduct = cache(
           },
         },
       },
-    });
+        })
+      : [];
 
     return {
       id: product.id,
@@ -386,8 +477,9 @@ export const getPublicProduct = cache(
             ),
           ),
       })),
-      drop: {
+      drop: selectedDropProduct?.drop.startsAt && selectedDropProduct.drop.endsAt ? {
         id: selectedDropProduct.drop.id,
+        dropProductId: selectedDropProduct.id,
         title: selectedDropProduct.drop.title,
         startsAt: selectedDropProduct.drop.startsAt.toISOString(),
         endsAt: selectedDropProduct.drop.endsAt.toISOString(),
@@ -401,7 +493,7 @@ export const getPublicProduct = cache(
           selectedDropProduct.publicState === "ENDED"
             ? selectedDropProduct.priceCents
             : null,
-      },
+      } : null,
       relatedProducts: relatedDropProducts.map((dropProduct) =>
         toProductCard(dropProduct, {
           title: selectedDropProduct.drop.title,
@@ -414,20 +506,7 @@ export const getPublicProduct = cache(
 
 export async function getPublicProductSlugs() {
   const products = await prisma.product.findMany({
-    where: {
-      ...publicProductWhere,
-      dropProducts: {
-        some: {
-          isVisible: true,
-          drop: {
-            status: "PUBLISHED",
-            archivedAt: null,
-            startsAt: { not: null },
-            endsAt: { not: null },
-          },
-        },
-      },
-    },
+    where: publicProductWhere,
     select: { slug: true, updatedAt: true },
   });
 

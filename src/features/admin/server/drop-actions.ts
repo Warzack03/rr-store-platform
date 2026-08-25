@@ -13,8 +13,19 @@ const dropSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED"]), startsAt: z.date().nullable(), endsAt: z.date().nullable(), heroMediaId: z.string().max(30).nullable(), heroAlt: z.string().max(255).nullable(),
 });
 
+async function ensureDropIsMutable(id: string, target: string) {
+  const drop = await getPrismaClient().drop.findUnique({
+    where: { id },
+    select: { status: true, endsAt: true },
+  });
+  if (drop?.status === "PUBLISHED" && drop.endsAt && drop.endsAt <= new Date()) {
+    redirect(messageUrl(target, "error", "Los drops finalizados son de solo lectura."));
+  }
+}
+
 export async function saveDrop(formData: FormData) {
   const admin = await requireAdmin(); const id = optionalText(formData.get("id")); const target = id ? `/admin/drops/${id}` : "/admin/drops/nuevo";
+  if (id) await ensureDropIsMutable(id, "/admin/drops");
   const parsed = dropSchema.safeParse({ title: formData.get("title"), slug: slugify(String(formData.get("slug") || formData.get("title") || "")), shortText: formData.get("shortText"), status: formData.get("status"), startsAt: parseDateTime(formData.get("startsAt")), endsAt: parseDateTime(formData.get("endsAt")), heroMediaId: optionalText(formData.get("heroMediaId")), heroAlt: optionalText(formData.get("heroAlt")) });
   if (!parsed.success) redirect(messageUrl(target, "error", "Revisa la información obligatoria del drop."));
   const productIds = formData.getAll("productIds").map(String).filter(Boolean);
@@ -53,10 +64,11 @@ export async function saveDrop(formData: FormData) {
   }
 }
 
-export async function archiveDrop(formData: FormData) { const admin = await requireAdmin(); const id = String(formData.get("id") ?? ""); const prisma = getPrismaClient(); await prisma.$transaction([prisma.drop.update({ where: { id }, data: { status: "ARCHIVED", archivedAt: new Date(), isPrimary: false } }), prisma.auditLog.create({ data: auditData(admin.id, "DROP_ARCHIVED", "Drop", id) })]); refreshAdminAndStore(); redirect(messageUrl("/admin/drops", "ok", "Drop archivado.")); }
+export async function archiveDrop(formData: FormData) { const admin = await requireAdmin(); const id = String(formData.get("id") ?? ""); await ensureDropIsMutable(id, "/admin/drops"); const prisma = getPrismaClient(); await prisma.$transaction([prisma.drop.update({ where: { id }, data: { status: "ARCHIVED", archivedAt: new Date(), isPrimary: false } }), prisma.auditLog.create({ data: auditData(admin.id, "DROP_ARCHIVED", "Drop", id) })]); refreshAdminAndStore(); redirect(messageUrl("/admin/drops", "ok", "Drop archivado.")); }
 
 export async function duplicateDrop(formData: FormData) {
   const admin = await requireAdmin(); const id = String(formData.get("id") ?? ""); const prisma = getPrismaClient();
+  await ensureDropIsMutable(id, "/admin/drops");
   const source = await prisma.drop.findUnique({ where: { id }, include: { dropProducts: { include: { customizationPrices: true } } } });
   if (!source) redirect(messageUrl("/admin/drops", "error", "Drop no encontrado."));
   const base = source.slug ?? slugify(source.title); let slug = uniqueSlug(base, "-copia"); let index = 2;

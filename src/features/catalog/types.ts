@@ -24,8 +24,9 @@ export type CatalogProductCard = {
   slug: string;
   type: ProductType;
   image: CatalogMedia | null;
-  dropTitle: string;
-  dropState: PublicDropState;
+  dropTitle: string | null;
+  dropState: PublicDropState | "UNAVAILABLE";
+  availabilityDate: string | null;
   price: PublicPrice | null;
 };
 
@@ -84,12 +85,13 @@ export type CatalogProductDetail = {
   bundleComponents: BundleComponentView[];
   drop: {
     id: string;
+    dropProductId: string;
     title: string;
     startsAt: string;
     endsAt: string;
     state: PublicDropState;
     publicPrice: PublicPrice | null;
     historicalPriceCents: number | null;
-  };
+  } | null;
   relatedProducts: CatalogProductCard[];
 };

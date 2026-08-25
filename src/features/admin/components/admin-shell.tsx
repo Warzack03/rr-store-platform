@@ -12,6 +12,7 @@ const navigation = [
   ["/admin/productos", "Productos"],
   ["/admin/tallas", "Tallas"],
   ["/admin/guias-tallas", "Guías"],
+  ["/admin/cupones", "Cupones"],
   ["/admin/medios", "Medios"],
   ["/admin/auditoria", "Auditoría"],
 ] as const;

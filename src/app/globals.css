@@ -156,6 +156,18 @@ a {
   color: #fcd34d;
 }
 
+.admin-shell[data-admin-theme="dark"] .text-emerald-700 {
+  color: #a7f3d0;
+}
+
+.admin-shell[data-admin-theme="dark"] .text-sky-700 {
+  color: #bae6fd;
+}
+
+.admin-shell[data-admin-theme="dark"] .text-slate-700 {
+  color: #cbd5e1;
+}
+
 .admin-shell[data-admin-theme="dark"] a:hover,
 .admin-shell[data-admin-theme="dark"] button:hover:not(:disabled) {
   filter: brightness(1.22);

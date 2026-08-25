@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandMark } from "@/components/brand/brand-mark";
+import { CartCount } from "@/features/cart/cart-count";
 
 const navigation = [
   { href: "/", label: "Inicio" },
@@ -35,6 +36,7 @@ export function SiteHeader() {
                   className="inline-flex min-h-11 items-center px-2 font-heading text-sm font-semibold uppercase tracking-[0.08em] text-white/80 hover:text-brand-gold sm:px-3 sm:text-base"
                 >
                   {item.label}
+                  {item.href === "/carrito" ? <CartCount /> : null}
                 </Link>
               </li>
             ))}

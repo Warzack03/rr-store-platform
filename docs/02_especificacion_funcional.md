@@ -148,13 +148,12 @@ Una sola página.
 Orden:
 
 1. contacto;
-2. entrega;
-3. dirección o Pickup;
-4. resumen;
-5. cupón;
-6. observaciones opcionales;
-7. aceptación legal;
-8. pago.
+2. dirección de entrega a domicilio;
+3. resumen;
+4. cupón;
+5. observaciones opcionales;
+6. aceptación legal;
+7. pago.
 
 Datos obligatorios: nombre, apellidos, email, teléfono.
 
@@ -174,19 +173,9 @@ Tarifa inicial `4,99 €`, configurable.
 
 Campos: CP, provincia, localidad, dirección, número y piso/puerta opcional.
 
-### SEUR Pickup
+Es el único método de entrega del MVP y puede activarse o desactivarse desde configuración. Si está desactivado, no se puede iniciar el checkout.
 
-Tarifa inicial `3,49 €`, configurable.
-
-Flujo: elegir Pickup, buscar por CP/localidad, consultar SEUR server-side, mostrar lista, seleccionar, revalidar antes de Stripe y guardar snapshot.
-
-Sin mapa embebido. Puede existir `Ver ubicación`.
-
-Snapshot: id SEUR, nombre, dirección, CP, localidad y coordenadas si existen.
-
-Si falla Pickup, informar y mantener domicilio disponible.
-
-Ambos métodos pueden activarse/desactivarse desde configuración.
+La expedición se crea manualmente en SEUR Pro fuera de la aplicación. La tienda no consulta puntos de recogida ni consume una API de SEUR.
 
 ## 9. Stripe
 
@@ -234,7 +223,7 @@ Estado financiero separado:
 
 Al cerrar drop: exportar datos y acción en lote `Marcar como en fabricación`.
 
-Exportación CSV/Excel con referencia, producto, cantidad, talla camiseta, nombre camiseta, dorsal camiseta, talla pantalón y dorsal pantalón. No incluir dirección, teléfono o email.
+Exportación CSV compatible con Excel, con una fila por producto físico: referencia, producto pedido, componente del pack si existe, producto de fabricación, cantidad, talla, nombre y dorsal. Debe admitir packs con cualquier número de componentes. No incluir dirección, teléfono o email.
 
 ### Enviado
 
@@ -244,6 +233,10 @@ Uno a uno. Tracking y URL opcionales. Al marcar: guardar fecha y enviar email.
 
 Se consulta SEUR manualmente y se marca a mano. No genera email adicional.
 
+### Entrega fallida
+
+La aplicación no reprograma entregas ni selecciona puntos de recogida. El comprador contacta mediante el email de soporte y el administrador gestiona manualmente la incidencia en SEUR Pro. El seguimiento privado y los emails deben mostrar claramente el canal de contacto.
+
 ### Notas internas
 
 El administrador puede añadir notas privadas.
@@ -252,7 +245,7 @@ El administrador puede añadir notas privadas.
 
 Ruta `/pedido/[token]` con token largo y aleatorio. Sin buscador público ni cuenta. No caduca automáticamente mientras se conserve el pedido.
 
-Mostrar número, productos, personalización, importes, estado, entrega, Pickup si aplica, tracking, fechas y contacto de soporte. No destacar PII innecesaria.
+Mostrar número, productos, personalización, importes, estado, dirección de entrega, tracking, fechas y contacto de soporte. No destacar PII innecesaria.
 
 ## 12. Correos
 
@@ -326,9 +319,9 @@ Biblioteca reutilizable, subida, alt y protección frente a borrado en uso.
 
 ### Configuración
 
-Editable: tarifas, activar/desactivar métodos, email soporte, estimación de entrega, nombre de tienda y aviso global opcional.
+Editable: tarifa y activación del envío a domicilio, email de soporte, estimación de entrega, nombre de tienda y aviso global opcional.
 
-No editable: secretos Stripe, SEUR, SMTP, TOTP o BBDD.
+No editable: secretos Stripe, SMTP, TOTP o BBDD.
 
 ### Auditoría
 

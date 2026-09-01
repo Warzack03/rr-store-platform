@@ -1,9 +1,8 @@
 # Rising Raimon Store Platform
 
-Plataforma de la tienda independiente de Rising Raimon. Las fases 1 a 4 incluyen
-la aplicación Next.js, el sistema visual, el modelo de datos, el catálogo público
-y el backoffice protegido. El carrito, el checkout y el resto de lógica ecommerce
-se implementarán en fases posteriores.
+Plataforma ecommerce independiente de Rising Raimon. Incluye catálogo por drops,
+carrito invitado, Stripe Checkout, operación manual de pedidos, correos,
+backoffice protegido, SEO y páginas legales estáticas.
 
 ## Requisitos
 
@@ -43,8 +42,9 @@ npm run db:migrate:reset      # destruye y reconstruye la BBDD local
 cuenta de MySQL necesita permisos para usar ambas en desarrollo. El comando de
 reset elimina todos los datos y solo debe emplearse de forma consciente en local.
 
-El seed crea únicamente `StoreSettings` y los métodos de envío `HOME` y `PICKUP`.
-No crea catálogo, pedidos, cupones, tallas, drops ni datos de demostración.
+El seed crea únicamente `StoreSettings`, activa el envío `HOME` y conserva
+`PICKUP` desactivado por compatibilidad histórica. No crea catálogo, pedidos,
+cupones, tallas, drops ni datos de demostración.
 
 ### Catálogo local de demostración
 
@@ -78,9 +78,8 @@ genéricas se conservan para poder reutilizarlas en el catálogo definitivo.
 - Los redirects de la tabla `Redirect` responden con un 301 real.
 - El sitemap solo contiene URLs cuando `STORE_ENV=production`.
 
-Las páginas públicas se revalidan cada minuto. Hasta que exista el backoffice de
-la Fase 4, el catálogo se carga directamente en BBDD; no se incluyen productos de
-demostración en el seed oficial.
+Las páginas públicas se revalidan cada minuto. El catálogo definitivo se gestiona
+desde el backoffice; los datos de demostración nunca forman parte del seed oficial.
 
 ## Stripe test local
 
@@ -91,6 +90,10 @@ locales, usa Stripe CLI y copia el secreto `whsec_...` mostrado a
 ```bash
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
+
+El endpoint procesa confirmaciones de Checkout y los eventos `refund.created`,
+`refund.updated` y `refund.failed`. En beta y producción, configura esos eventos
+en el webhook de Stripe además de los eventos de Checkout.
 
 El checkout usa una sesión alojada de 30 minutos. El retorno del navegador no
 crea el pedido: solo el webhook firmado puede confirmar el pago y generar un
@@ -119,13 +122,42 @@ configurar una aplicación TOTP; tras validarlo se muestran una única vez ocho
 códigos de recuperación. La sesión dura como máximo ocho horas y se invalida si
 se desactiva la cuenta o cambia su `sessionVersion`.
 
-Desde el panel se administran drops, productos, tallas, guías de tallas y medios.
-También incluye duplicado, archivado, vista previa privada, precios y suplementos
-por drop, y un registro de auditoría de solo lectura. Los pedidos aparecen en el
-dashboard únicamente como métricas: sus operaciones pertenecen a fases posteriores.
+Desde el panel se administran drops, productos, tallas, guías de tallas, medios,
+cupones, pedidos, envíos manuales, configuración, correos y redirects. También
+incluye duplicado, archivado, vista previa privada, precios y suplementos por drop,
+exportación de fabricación y un registro de auditoría de solo lectura.
 
-Las imágenes aceptadas son JPG, PNG y WebP de hasta 8 MB. El tipo se valida por el
-contenido del archivo; no se permite SVG ni eliminar un medio que esté en uso.
+Las imágenes aceptadas son JPG, PNG y WebP no animados de hasta 8 MB, 8.000 px por
+lado y 40 megapíxeles. El tipo se valida por el contenido del archivo; no se
+permite SVG ni eliminar un medio que esté en uso.
+
+## SEO, legales y accesibilidad
+
+Las rutas legales son `/aviso-legal`, `/privacidad`, `/cookies`,
+`/condiciones-de-compra`, `/envios` y `/cambios-y-devoluciones`. Sus textos deben
+ser revisados por asesoría jurídica y fiscal antes de activar producción.
+
+Producción publica canonical, Open Graph, JSON-LD, `robots.txt` y `sitemap.xml`.
+Beta permanece bloqueada para buscadores. Para verificar el dominio mediante la
+etiqueta HTML de Google Search Console, copia solo el token facilitado por Google
+en `GOOGLE_SITE_VERIFICATION` y vuelve a desplegar. El alta de la propiedad y el
+envío del sitemap se realizan manualmente durante el corte.
+
+Los redirects de URLs relevantes de WooCommerce se administran desde
+`/admin/configuracion`. Aceptan una URL antigua completa o una ruta interna y
+siempre responden con 301; la aplicación evita bucles y aplana cadenas conocidas.
+
+Las comprobaciones E2E cubren rutas públicas, noindex, overflow móvil y reglas
+automatizables WCAG A/AA. Tras instalar dependencias por primera vez:
+
+```bash
+npx playwright install chromium
+npm run build
+npm run test:e2e
+```
+
+Las pruebas automáticas de accesibilidad no sustituyen la revisión manual con
+teclado, lector de pantalla, zoom al 200 % y dispositivos reales.
 
 ## Comprobaciones
 
@@ -133,11 +165,28 @@ contenido del archivo; no se permite SVG ni eliminar un medio que esté en uso.
 npm run lint
 npm run typecheck
 npm run test
+npm run test:e2e
 npm run build
 npm run prisma:validate
 npm run db:verify
 npm run catalog:verify -- http://127.0.0.1:3000
+npm run release:check -- --target=beta
+npm run smoke -- https://tienda-beta.risingraimon.es --target=beta
 ```
+
+`release:check` no muestra secretos y comprueba entorno, base de datos, catálogo,
+administrador, medios, Stripe, SMTP y restos demo. `smoke` solo realiza peticiones
+GET no destructivas. El procedimiento completo de lanzamiento y rollback está en
+[`docs/11_preparacion_y_corte.md`](docs/11_preparacion_y_corte.md).
+
+Para inventariar únicamente los datos del entorno conectado, sin exigir todavía
+las credenciales live, puede usarse:
+
+```bash
+npm run release:check -- --target=production --data-only
+```
+
+Este modo sirve como diagnóstico y no sustituye el preflight completo.
 
 ## Variables de entorno
 
@@ -149,8 +198,16 @@ npm run catalog:verify -- http://127.0.0.1:3000
 | `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación; pool máximo de 5 conexiones. |
 | `SHADOW_DATABASE_URL` | En migraciones dev | Base vacía y distinta usada por Prisma Migrate. |
 | `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy. |
+| `GOOGLE_SITE_VERIFICATION` | Opcional en producciÃ³n | Token HTML facilitado por Google Search Console. |
 | `STRIPE_SECRET_KEY` | Para checkout | Clave secreta de Stripe; `sk_test_...` en local y beta. |
 | `STRIPE_WEBHOOK_SECRET` | Para webhook | Secreto de firma del endpoint o Stripe CLI. |
+| `SMTP_HOST` | Para correos | Servidor SMTP, normalmente `smtp.hostinger.com`. |
+| `SMTP_PORT` | Para correos | Puerto SMTP; normalmente `465`. |
+| `SMTP_SECURE` | Para correos | `true` para TLS directo en el puerto 465. |
+| `SMTP_USER` | Para correos | Cuenta de correo remitente. |
+| `SMTP_PASSWORD` | Para correos | Contraseña de la cuenta; solo en variables de entorno. |
+| `SMTP_FROM_EMAIL` | Para correos | Dirección visible del remitente. |
+| `SMTP_FROM_NAME` | Opcional | Nombre visible; si falta se usa el nombre configurado de la tienda. |
 | `ADMIN_INITIAL_EMAIL` | Solo alta inicial | Email del primer administrador. |
 | `ADMIN_INITIAL_PASSWORD` | Solo alta inicial | Contraseña temporal de entrada al comando de alta. |
 
@@ -171,6 +228,8 @@ secretos y raíces de medios distintas.
 - `STORE_ENV=production` y `SITE_URL=https://tienda.risingraimon.es`.
 - Base de datos y `MEDIA_ROOT` exclusivos de producción.
 - En cada release se ejecuta `npm run db:migrate:deploy` antes del arranque.
+- Después de las migraciones se ejecuta `npm run db:seed`; es idempotente y
+  garantiza la configuración estructural y que Pickup siga desactivado.
 - Comando de build: `npm ci && npm run build`.
 - Comando de inicio: `npm run start`.
 - Se comprueba `/api/health` después de cada despliegue.
@@ -192,8 +251,5 @@ src/styles/          tokens visuales de Rising Raimon
 prisma/schema.prisma modelo relacional del MVP
 prisma/migrations/   historial SQL versionado
 prisma/seed.ts       configuración inicial idempotente
-scripts/             alta inicial y verificación de BBDD
+scripts/             alta inicial, verificaciones, preflight y smoke tests
 ```
-
-La Fase 4 implementa la autenticación y administración completa del catálogo. No
-incluye carrito, checkout, cupones ni operaciones sobre pedidos.

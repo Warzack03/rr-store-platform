@@ -28,11 +28,12 @@ async function seed() {
     }),
     prisma.shippingMethod.upsert({
       where: { kind: "PICKUP" },
-      update: {},
+      update: { isEnabled: false },
       create: {
         kind: "PICKUP",
         displayName: "Punto SEUR Pickup",
         priceCents: 349,
+        isEnabled: false,
         sortOrder: 20,
       },
     }),

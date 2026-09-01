@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/features/catalog/domain.test.ts src/features/cart/domain.test.ts src/features/checkout/domain.test.ts src/features/admin/auth/rate-limit.test.ts",
+    "test": "tsx --test src/features/catalog/domain.test.ts src/features/cart/domain.test.ts src/features/checkout/domain.test.ts src/features/orders/domain.test.ts src/features/email/domain.test.ts src/features/settings/redirect-domain.test.ts src/features/admin/auth/rate-limit.test.ts src/features/release/readiness.test.ts",
+    "test:e2e": "tsx scripts/run-playwright.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "db:migrate:dev": "prisma migrate dev",
@@ -20,6 +21,8 @@
     "demo:clean": "tsx scripts/clean-demo.ts",
     "db:verify": "tsx scripts/verify-database.ts",
     "catalog:verify": "tsx scripts/verify-catalog.ts",
+    "release:check": "tsx scripts/check-release.ts",
+    "smoke": "tsx scripts/smoke-deployment.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "postinstall": "prisma generate"
   },
@@ -39,13 +42,17 @@
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "rr-nodemailer": "npm:nodemailer@^9.0.6",
     "sharp": "^0.35.3",
     "stripe": "^22.5.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "26.2.0",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "eslint": "9.39.5",
@@ -56,7 +63,8 @@
     "typescript": "6.0.3"
   },
   "overrides": {
-    "deepmerge-ts": "8.0.1"
+    "deepmerge-ts": "8.0.1",
+    "mariadb": "3.5.3"
   },
   "engines": {
     "node": ">=22.0.0"

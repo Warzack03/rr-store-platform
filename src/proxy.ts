@@ -4,7 +4,18 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getPrismaClient } from "@/server/db/client";
 
-const currentStaticPaths = new Set(["/", "/productos", "/carrito"]);
+const currentStaticPaths = new Set([
+  "/",
+  "/productos",
+  "/carrito",
+  "/aviso-legal",
+  "/privacidad",
+  "/cookies",
+  "/condiciones-de-compra",
+  "/envios",
+  "/cambios-y-devoluciones",
+]);
+const privatePathsWithoutRedirects = ["/checkout", "/pedido/"];
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/admin")) {
@@ -36,7 +47,8 @@ export async function proxy(request: NextRequest) {
 
   if (
     (request.method !== "GET" && request.method !== "HEAD") ||
-    currentStaticPaths.has(request.nextUrl.pathname)
+    currentStaticPaths.has(request.nextUrl.pathname) ||
+    privatePathsWithoutRedirects.some((prefix) => request.nextUrl.pathname.startsWith(prefix))
   ) {
     return NextResponse.next();
   }

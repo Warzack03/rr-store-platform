@@ -15,12 +15,12 @@
 
 ## 2. Regla de contenido
 
-No mostrar `datos extraídos de BBDD`, `webhook recibido`, `foreign key`, `error 500`, `SEUR API 503`, IDs internos, explicaciones de implementación o anotaciones de IA.
+No mostrar `datos extraídos de BBDD`, `webhook recibido`, `foreign key`, `error 500`, IDs internos, explicaciones de implementación o anotaciones de IA.
 
 Transformar a lenguaje útil:
 
 - `Pago confirmado`.
-- `No hemos podido cargar los puntos de recogida.`
+- `No hemos podido completar esta acción. Inténtalo de nuevo.`
 - `Esta imagen se está utilizando en Camiseta 26/27.`
 - `No hemos podido enviar el correo. Puedes reenviarlo.`
 
@@ -156,23 +156,16 @@ Vacío: `Tu carrito está vacío` + `Ver productos`.
 Orden:
 
 1. contacto;
-2. entrega;
-3. dirección/Pickup;
-4. resumen;
-5. cupón;
-6. observaciones;
-7. consentimiento;
-8. pagar.
+2. dirección de entrega;
+3. resumen;
+4. cupón;
+5. observaciones;
+6. consentimiento;
+7. pagar.
 
 ### Entrega
 
-Mostrar las tarifas reales configuradas.
-
-### Pickup
-
-Buscador por CP/localidad, estado `Buscando puntos...`, lista con nombre, dirección, horario cuando exista, `Seleccionar` y `Ver ubicación` opcional.
-
-Error: `No hemos podido cargar los puntos de recogida. Puedes intentarlo de nuevo o elegir envío a domicilio.`
+Mostrar la tarifa real configurada para entrega a domicilio y los campos de dirección. No mostrar selector de método de entrega en el MVP.
 
 ### Consentimiento
 
@@ -186,7 +179,7 @@ Sin consentimiento comercial.
 
 ### Errores
 
-Junto al campo: `Introduce un email válido`, `Selecciona un punto de recogida`, `Actualmente solo realizamos envíos a Península`, `Este drop ya ha finalizado`.
+Junto al campo: `Introduce un email válido`, `Completa la dirección de entrega`, `Actualmente solo realizamos envíos a Península`, `Este drop ya ha finalizado`.
 
 ## 9. Stripe y retorno
 
@@ -215,6 +208,8 @@ Enviado con tracking: CTA `Seguir envío`.
 Sin tracking: `Tu pedido ha sido enviado. La entrega estimada es de 24-48 horas.`
 
 Contacto: `¿Necesitas ayuda con tu pedido? risingraimon@gmail.com`.
+
+Incidencia de entrega: `Si la entrega no ha podido completarse, escríbenos y la gestionaremos con SEUR.`
 
 ## 12. Backoffice
 

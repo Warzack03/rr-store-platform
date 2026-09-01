@@ -138,16 +138,6 @@ Preferentemente Server Action. Si se necesita endpoint: `POST /api/checkout/sess
 
 Nunca aceptar precios como fuente de verdad.
 
-### `GET /api/shipping/pickup`
-
-- CP/localidad;
-- rate limit;
-- validación;
-- credenciales server-side;
-- consulta SEUR;
-- respuesta mínima al navegador;
-- timeout.
-
 ### `GET /api/health`
 
 Respuesta no sensible. Puede comprobar proceso y MySQL. No devolver versiones, variables, rutas del sistema ni credenciales.

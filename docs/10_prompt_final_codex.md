@@ -55,7 +55,6 @@ Usar:
 - Node.js;
 - Stripe Checkout alojado;
 - SMTP Hostinger;
-- API oficial SEUR Pickup server-side;
 - Playwright para E2E.
 
 No introducir sin una necesidad aprobada Redis, Sentry, Datadog, Elasticsearch, colas externas, microservicios, backend separado, CMS o almacenamiento de pago.
@@ -92,7 +91,7 @@ El usuario desarrolla solo; no introducir GitFlow complejo.
 
 Beta: BBDD propia, Stripe test, noindex, acceso protegido y media propia.
 
-Producción: BBDD propia, Stripe live, SMTP real, SEUR real y media propia.
+Producción: BBDD propia, Stripe live, SMTP real, operativa manual mediante SEUR Pro y media propia.
 
 ## 6. Identidad UX/UI
 
@@ -158,7 +157,7 @@ Flujo real:
 5. gestionar proveedor fuera de esta app;
 6. fabricar;
 7. recibir prendas;
-8. enviar con SEUR.
+8. tramitar y enviar manualmente mediante SEUR Pro.
 
 No implementar stock ni reservas.
 
@@ -297,13 +296,12 @@ Una página.
 Orden:
 
 1. contacto;
-2. entrega;
-3. dirección/Pickup;
-4. resumen;
-5. cupón;
-6. observaciones;
-7. consentimiento;
-8. Stripe.
+2. dirección de entrega a domicilio;
+3. resumen;
+4. cupón;
+5. observaciones;
+6. consentimiento;
+7. Stripe.
 
 Datos: nombre, apellidos, email, teléfono.
 
@@ -317,28 +315,17 @@ Consentimiento: condiciones + privacidad. Sin marketing.
 
 Solo España peninsular. País fijo España. Validación server-side por CP. Rechazar Canarias, Baleares, Ceuta y Melilla.
 
-Métodos:
+Método único del MVP: HOME, con tarifa inicial de 4,99 €.
 
-- HOME, tarifa inicial 4,99 €;
-- PICKUP, tarifa inicial 3,49 €.
-
-Ambos precios configurables y métodos activables/desactivables. Nunca hardcodear importes.
+La tarifa y la activación del envío a domicilio son configurables. Nunca hardcodear importes.
 
 ## 21. SEUR
 
 El usuario tiene SEUR Pro.
 
-MVP: consulta oficial de puntos Pickup, listado, selección, revalidación y snapshot.
+El MVP no consume ninguna API de SEUR ni permite seleccionar puntos de recogida. Las expediciones, etiquetas, consultas de entrega e incidencias se gestionan manualmente en SEUR Pro.
 
-No creación automática de expedición, etiqueta ni estado automático.
-
-Browser nunca recibe credenciales.
-
-Si Pickup falla, informar y permitir domicilio.
-
-No mapa embebido.
-
-Guardar id, nombre, dirección, CP, ciudad y coordenadas si existen.
+La aplicación guarda tracking y URL opcionales introducidos por el administrador. Ante una entrega fallida, el comprador contacta por email y el administrador gestiona la incidencia fuera de la aplicación.
 
 ## 22. Stripe
 
@@ -372,7 +359,7 @@ Notas internas admitidas.
 
 ## 24. Exportación de fabricación
 
-CSV/Excel solo con referencia, producto, cantidad, talla camiseta, nombre camiseta, dorsal camiseta, talla pantalón y dorsal pantalón.
+CSV compatible con Excel, con una fila por producto físico: referencia, producto pedido, componente del pack si existe, producto de fabricación, cantidad, talla, nombre y dorsal. Debe admitir packs flexibles con cualquier número de componentes.
 
 No incluir email, teléfono ni dirección.
 
@@ -508,7 +495,7 @@ Obligatorio:
 - Zod server-side;
 - auth/autorización server-side;
 - CSRF/origin apropiado;
-- rate limit login/2FA/checkout/Pickup;
+- rate limit login/2FA/checkout;
 - Stripe signature;
 - idempotencia;
 - precios recalculados server-side;
@@ -559,8 +546,8 @@ Implementar aproximadamente en este orden:
 4. admin catálogo;
 5. carrito/cupones;
 6. checkout + Stripe test;
-7. SEUR Pickup;
-8. operación de pedidos;
+7. descartada: SEUR Pickup no disponible para la cuenta actual;
+8. operación de pedidos, con envío y tracking registrados manualmente;
 9. emails/configuración;
 10. SEO/legal/hardening;
 11. corte.
@@ -571,7 +558,7 @@ No avanzar de fase sin cerrar y validar la actual.
 
 Cada fase debe ejecutar lo relevante entre lint, typecheck, unit tests, integration tests, Playwright y build.
 
-Para lanzamiento: Stripe live, webhook, SMTP, SEUR, backup/restore, legal/fiscal, WCAG AA, responsive, SEO y performance.
+Para lanzamiento: Stripe live, webhook, SMTP, operativa manual SEUR Pro y tracking, backup/restore, legal/fiscal, WCAG AA, responsive, SEO y performance.
 
 ## 38. Primera tarea concreta
 

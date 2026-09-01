@@ -7,6 +7,8 @@ import { Countdown } from "@/features/catalog/components/countdown";
 import { DropSection } from "@/features/catalog/components/drop-section";
 import { dropStateLabels } from "@/features/catalog/domain";
 import { getPublicCatalog } from "@/features/catalog/server/catalog";
+import { getPublicStoreSettings } from "@/features/settings/server/store-settings";
+import { env } from "@/lib/env";
 
 export const revalidate = 60;
 
@@ -29,13 +31,31 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const catalog = await getPublicCatalog();
+  const [catalog, settings] = await Promise.all([
+    getPublicCatalog(),
+    getPublicStoreSettings(),
+  ]);
   const featuredDrop = catalog.find((drop) => drop.state !== "ENDED") ?? null;
-  const historicalDrops = catalog.filter((drop) => drop.state === "ENDED");
   const now = new Date().toISOString();
+  const storeName = settings?.storeName ?? "Tienda Rising Raimon";
+  const supportEmail = settings?.supportEmail ?? "risingraimon@gmail.com";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "OnlineStore",
+    name: storeName,
+    url: env.SITE_URL,
+    logo: new URL("/brand/escudo-rising-raimon.webp", env.SITE_URL).toString(),
+    email: supportEmail,
+    areaServed: { "@type": "Country", name: "España" },
+    sameAs: ["https://risingraimon.es"],
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
+      />
       <section className="mx-auto max-w-[80rem] px-5 py-8 md:px-8 md:py-12 xl:px-12 xl:py-16">
         {featuredDrop ? (
           <div className="brand-panel grid min-h-[34rem] overflow-hidden md:grid-cols-[1.05fr_0.95fr]">
@@ -97,11 +117,11 @@ export default async function HomePage() {
                 Estamos preparando el próximo drop
               </h1>
               <p className="mt-7 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
-                Mientras llega, puedes recordar las equipaciones y prendas que ya
-                han formado parte de Rising Raimon.
+                Estamos ultimando el próximo lanzamiento. Mientras tanto, puedes
+                consultar todas las prendas del club.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/productos">Ver productos anteriores</ButtonLink>
+                <ButtonLink href="/productos">Ver catálogo</ButtonLink>
                 <ButtonLink
                   href="https://risingraimon.es"
                   external
@@ -124,36 +144,6 @@ export default async function HomePage() {
         <div className="mx-auto max-w-[80rem] px-5 pb-16 md:px-8 md:pb-24 xl:px-12">
           <DropSection drop={featuredDrop} />
         </div>
-      ) : null}
-
-      {historicalDrops.length > 0 ? (
-        <section
-          aria-labelledby="drops-anteriores"
-          className="border-t border-white/10 bg-black/10"
-        >
-          <div className="mx-auto max-w-[80rem] px-5 py-16 md:px-8 md:py-20 xl:px-12">
-            <div className="mb-10">
-              <p className="font-heading text-sm font-bold uppercase tracking-[0.2em] text-brand-gold">
-                Nuestra historia
-              </p>
-              <h2
-                id="drops-anteriores"
-                className="mt-2 font-display text-5xl tracking-wide text-white sm:text-6xl"
-              >
-                Drops anteriores
-              </h2>
-              <p className="mt-3 text-white/60">
-                Colecciones finalizadas que siguen formando parte del club.
-              </p>
-            </div>
-
-            <div className="space-y-16">
-              {historicalDrops.map((drop) => (
-                <DropSection key={drop.id} drop={drop} headingLevel={3} />
-              ))}
-            </div>
-          </div>
-        </section>
       ) : null}
     </>
   );

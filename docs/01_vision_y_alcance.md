@@ -14,7 +14,7 @@ La solución debe priorizar simplicidad operativa, seguridad, rendimiento móvil
 
 ### Comprador
 
-Persona que accede a la tienda principalmente desde móvil para descubrir el drop activo o próximo, consultar productos, revisar imágenes y guía de tallas, configurar talla y personalización, añadir al carrito, aplicar cupón, elegir domicilio o SEUR Pickup, pagar con Stripe, recibir confirmación y consultar el estado mediante un enlace privado. No necesita crear cuenta.
+Persona que accede a la tienda principalmente desde móvil para descubrir el drop activo o próximo, consultar productos, revisar imágenes y guía de tallas, configurar talla y personalización, añadir al carrito, aplicar cupón, indicar una dirección de entrega a domicilio, pagar con Stripe, recibir confirmación y consultar el estado mediante un enlace privado. No necesita crear cuenta.
 
 ### Administrador
 
@@ -79,7 +79,7 @@ Reglas: nombres en mayúsculas, se permiten tildes y espacios, longitud máxima 
 - Stripe Checkout alojado.
 - Tarjeta y Apple Pay/Google Pay cuando Stripe y el dispositivo lo permitan.
 - Solo España peninsular.
-- Envío a domicilio y SEUR Pickup.
+- Envío a domicilio en España peninsular.
 - Cupones configurables.
 - Confirmación de pedido.
 - Consulta de pedido mediante token privado.
@@ -94,7 +94,7 @@ Estado excepcional: cancelado. La dimensión financiera mantiene pagado, reembol
 
 ### Operación del drop
 
-Cuando termina un drop se exportan los datos necesarios para fabricación, los pedidos pueden marcarse en lote como `En fabricación`, el proceso con el proveedor se gestiona fuera de esta aplicación, cuando llega la mercancía cada pedido se envía manualmente con SEUR Pro, se registra tracking opcional, se marca como `Enviado` y después como `Entregado` tras comprobar SEUR.
+Cuando termina un drop se exportan los datos necesarios para fabricación, los pedidos pueden marcarse en lote como `En fabricación`, el proceso con el proveedor se gestiona fuera de esta aplicación, cuando llega la mercancía cada pedido se tramita manualmente con SEUR Pro, se registra tracking opcional, se marca como `Enviado` y después como `Entregado` tras comprobar SEUR. Las entregas fallidas se gestionan fuera de la aplicación con SEUR Pro cuando el comprador contacta por email.
 
 ### Administración
 
@@ -132,7 +132,7 @@ Cuando termina un drop se exportan los datos necesarios para fabricación, los p
 
 ## 5. Fuera del MVP
 
-No implementar inicialmente cuentas de cliente, registro público, recuperación de contraseña de clientes, direcciones guardadas, inventario, movimientos o reservas de stock, categorías, etiquetas, buscador, filtros, wishlist, reseñas, newsletter, recuperación de carrito abandonado, avisos de reposición, GA4, píxeles publicitarios, Merchant Center, envío gratuito por importe, promociones por volumen, cupones acumulables, límite de cupón por cliente, facturación fiscal propia, albaranes, sistema de tickets, creación automática de expediciones SEUR, mapa embebido Pickup, Redis, Sentry, colas externas, microservicios, importación masiva de WooCommerce, migración de clientes/pedidos históricos ni CMS para páginas legales.
+No implementar inicialmente cuentas de cliente, registro público, recuperación de contraseña de clientes, direcciones guardadas, inventario, movimientos o reservas de stock, categorías, etiquetas, buscador, filtros, wishlist, reseñas, newsletter, recuperación de carrito abandonado, avisos de reposición, GA4, píxeles publicitarios, Merchant Center, envío gratuito por importe, promociones por volumen, cupones acumulables, límite de cupón por cliente, facturación fiscal propia, albaranes, sistema de tickets, selección de puntos Pickup, integración con API de SEUR, creación automática de expediciones o etiquetas SEUR, gestión automática de incidencias de transporte, Redis, Sentry, colas externas, microservicios, importación masiva de WooCommerce, migración de clientes/pedidos históricos ni CMS para páginas legales.
 
 ## 6. Evolución futura
 
@@ -154,8 +154,9 @@ Estas posibilidades no justifican implementar hoy funcionalidad no utilizada.
 - Catálogo maestro reutilizable por drop.
 - Precio comercial en la relación producto/drop.
 - Stripe Checkout.
-- SEUR domicilio + Pickup.
-- Operativa SEUR manual salvo consulta de puntos Pickup.
+- Solo entrega a domicilio en el MVP.
+- Operativa SEUR completamente manual mediante SEUR Pro; la tienda solo guarda tracking y URL opcionales.
+- Entregas fallidas gestionadas por el administrador cuando el comprador contacta por email.
 - Precios con IVA incluido.
 - Sin sistema fiscal propio en el MVP.
 - WooCommerce histórico no se migra.

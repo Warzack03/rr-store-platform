@@ -10,12 +10,35 @@ const navigation = [
   ["/admin", "Inicio"],
   ["/admin/drops", "Drops"],
   ["/admin/productos", "Productos"],
+  ["/admin/pedidos", "Pedidos"],
   ["/admin/tallas", "Tallas"],
   ["/admin/guias-tallas", "Guías"],
   ["/admin/cupones", "Cupones"],
   ["/admin/medios", "Medios"],
+  ["/admin/configuracion", "Configuración"],
   ["/admin/auditoria", "Auditoría"],
 ] as const;
+
+function ThemeIcon({ theme }: { theme: "dark" | "light" }) {
+  return theme === "dark" ? (
+    <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+    </svg>
+  ) : (
+    <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24">
+      <path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
+function SignOutIcon() {
+  return (
+    <svg aria-hidden="true" className="size-5" fill="none" viewBox="0 0 24 24">
+      <path d="M10 17l5-5-5-5M15 12H3M14 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
 
 export function AdminShell({
   email,
@@ -41,11 +64,11 @@ export function AdminShell({
       data-admin-theme={theme}
     >
       <header className="border-b border-slate-800 bg-[var(--rr-navy-950)] text-white">
-        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-4 px-4 py-4 lg:px-8">
-          <Link className="font-[family-name:var(--font-bebas-neue)] text-2xl tracking-widest text-[var(--rr-gold-400)]" href="/admin">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-4 lg:flex-nowrap lg:px-8">
+          <Link className="shrink-0 font-[family-name:var(--font-bebas-neue)] text-2xl tracking-widest text-[var(--rr-gold-400)]" href="/admin">
             RISING RAIMON · ADMIN
           </Link>
-          <nav aria-label="Administración" className="order-3 flex w-full gap-1 overflow-x-auto lg:order-none lg:w-auto lg:flex-1">
+          <nav aria-label="Administración" className="admin-nav-scroll order-3 flex w-full gap-0.5 overflow-x-auto lg:order-none lg:min-w-0 lg:flex-1">
             {navigation.map(([href, label]) => {
               const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
               return (
@@ -59,24 +82,26 @@ export function AdminShell({
               );
             })}
           </nav>
-          <div className="ml-auto flex items-center gap-3 text-sm">
-            <span className="hidden text-slate-400 xl:inline">{email}</span>
+          <div className="ml-auto flex shrink-0 items-center gap-2 text-sm">
+            <span className="hidden text-slate-400 2xl:inline">{email}</span>
             <button
               aria-label={`Activar modo ${theme === "dark" ? "claro" : "oscuro"}`}
-              aria-pressed={theme === "dark"}
-              className="inline-flex items-center gap-2 rounded border border-slate-600 px-3 py-2 hover:border-slate-400"
+              className="inline-flex size-10 items-center justify-center rounded border border-slate-600 text-slate-200 transition-colors hover:border-slate-400 hover:bg-slate-800 hover:text-white"
               onClick={toggleTheme}
               title={`Activar modo ${theme === "dark" ? "claro" : "oscuro"}`}
               type="button"
             >
-              <span aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
-              <span className="hidden sm:inline">
-                {theme === "dark" ? "Claro" : "Oscuro"}
-              </span>
+              <ThemeIcon theme={theme} />
             </button>
-            <Link className="rounded border border-slate-600 px-3 py-2 hover:border-slate-400" href="/" target="_blank">Ver tienda</Link>
             <form action={endAdminSession}>
-              <button className="rounded border border-slate-600 px-3 py-2 hover:border-slate-400" type="submit">Salir</button>
+              <button
+                aria-label="Cerrar sesión"
+                className="inline-flex size-10 items-center justify-center rounded border border-slate-600 text-slate-200 transition-colors hover:border-red-400 hover:bg-red-950/60 hover:text-red-200"
+                title="Cerrar sesión"
+                type="submit"
+              >
+                <SignOutIcon />
+              </button>
             </form>
           </div>
         </div>

@@ -20,6 +20,7 @@ export type ValidatedCartLine = {
     label: string;
     productName: string;
     sizeLabel: string;
+    quantity: number;
     customizations: Array<{
       type: "NAME" | "NUMBER";
       label: string;

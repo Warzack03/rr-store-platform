@@ -49,6 +49,7 @@ export async function GET(
         "Cache-Control": "public, max-age=31536000, immutable",
         "Content-Length": String(contents.byteLength),
         "Content-Type": media.mimeType,
+        "Cross-Origin-Resource-Policy": "same-origin",
         "X-Content-Type-Options": "nosniff",
       },
     });

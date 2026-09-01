@@ -95,6 +95,15 @@ a {
   color: #f8fafc;
 }
 
+.admin-nav-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.admin-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 .admin-shell[data-admin-theme="dark"] .bg-white {
   background-color: #0b1b31;
 }
@@ -162,6 +171,10 @@ a {
 
 .admin-shell[data-admin-theme="dark"] .text-sky-700 {
   color: #bae6fd;
+}
+
+.admin-shell[data-admin-theme="dark"] .text-violet-700 {
+  color: #ddd6fe;
 }
 
 .admin-shell[data-admin-theme="dark"] .text-slate-700 {

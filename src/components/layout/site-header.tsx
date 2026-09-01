@@ -9,18 +9,31 @@ const navigation = [
   { href: "/carrito", label: "Carrito" },
 ] as const;
 
-export function SiteHeader() {
+type SiteHeaderProps = {
+  globalNotice?: string | null;
+  storeName?: string;
+};
+
+export function SiteHeader({
+  globalNotice,
+  storeName = "Tienda Rising Raimon",
+}: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-[#071629e8] backdrop-blur-md">
+      {globalNotice ? (
+        <div className="border-b border-brand-gold/30 bg-brand-gold px-5 py-2 text-center text-sm font-semibold leading-5 text-brand-navy">
+          {globalNotice}
+        </div>
+      ) : null}
       <div className="mx-auto flex h-[4.5rem] max-w-[80rem] items-center justify-between gap-4 px-5 md:px-8 xl:px-12">
         <Link
           href="/"
-          aria-label="Ir al inicio de la tienda Rising Raimon"
+          aria-label={`Ir al inicio de ${storeName}`}
           className="flex shrink-0 items-center gap-2.5"
         >
           <BrandMark priority size={44} />
           <span className="hidden font-display text-[2rem] leading-none tracking-[0.035em] text-brand-gold sm:inline">
-            Rising Raimon
+            {storeName}
           </span>
         </Link>
 

@@ -50,7 +50,6 @@ Priorizar pruebas donde una regresión pueda provocar cobro incorrecto, pedido d
 ### Envío
 
 - domicilio;
-- Pickup;
 - tarifa configurable;
 - método desactivado;
 - CP peninsular;
@@ -94,20 +93,14 @@ La pantalla espera, no crea pedido falso y termina al llegar la confirmación.
 
 Conservar carrito/formulario razonablemente y permitir reintento.
 
-## 5. SEUR
+## 5. Operativa SEUR manual
 
-Con preproducción o mock:
-
-- búsqueda válida;
-- resultados;
-- selección;
-- revalidación;
-- snapshot;
-- timeout;
-- error HTTP;
-- respuesta vacía.
-
-Ante fallo: mensaje humano y domicilio disponible.
+- todo pedido usa entrega a domicilio;
+- número de seguimiento y URL opcionales;
+- enlace de seguimiento visible en el pedido privado;
+- cambio manual a enviado y entregado con fechas e historial;
+- ninguna llamada a una API de SEUR;
+- ante entrega fallida, instrucciones claras para contactar por email y gestión manual en SEUR Pro.
 
 ## 6. Email
 
@@ -134,10 +127,6 @@ Home → producto → talla → nombre → dorsal → carrito → cupón → che
 ### Equipación completa
 
 Talla camiseta distinta de pantalón, nombre y dorsales independientes.
-
-### Pickup
-
-Buscar, seleccionar, pagar y confirmar snapshot.
 
 ### Drop finalizado
 
@@ -219,4 +208,4 @@ No aceptar pantallas con anotaciones de implementación, nombres de tablas, IDs 
 
 ## 16. Criterio global de salida
 
-El MVP está listo cuando pasan compra completa, Stripe, SEUR/fallback, SMTP, validación legal, backup/restore, responsive, accesibilidad, SEO, performance razonable, beta aprobada y rollback documentado.
+El MVP está listo cuando pasan compra completa, Stripe, seguimiento y operativa manual con SEUR Pro, SMTP, validación legal, backup/restore, responsive, accesibilidad, SEO, performance razonable, beta aprobada y rollback documentado.

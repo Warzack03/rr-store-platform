@@ -17,6 +17,7 @@ import {
   getPublicProductSlugs,
 } from "@/features/catalog/server/catalog";
 import type { CatalogProductDetail } from "@/features/catalog/types";
+import { getPublicStoreSettings } from "@/features/settings/server/store-settings";
 import { env } from "@/lib/env";
 
 export const revalidate = 60;
@@ -122,8 +123,12 @@ function ProductStructuredData({ product }: { product: CatalogProductDetail }) {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = await getPublicProduct(slug);
+  const [product, settings] = await Promise.all([
+    getPublicProduct(slug),
+    getPublicStoreSettings(),
+  ]);
   if (!product) notFound();
+  const supportEmail = settings?.supportEmail ?? "risingraimon@gmail.com";
 
   const drop = product.drop;
   const isUpcoming = drop?.state === "UPCOMING";
@@ -223,10 +228,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <p className="mt-7 text-sm leading-6 text-white/60">
               ¿No encuentras tu talla? Escríbenos a{" "}
               <a
-                href="mailto:risingraimon@gmail.com"
+                href={`mailto:${supportEmail}`}
                 className="font-semibold text-brand-gold underline underline-offset-4"
               >
-                risingraimon@gmail.com
+                {supportEmail}
               </a>
             </p>
           </div>

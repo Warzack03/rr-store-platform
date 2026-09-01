@@ -38,7 +38,7 @@ export function readAdminChallenge(value: string) {
 
 export const challengeCookieOptions = {
   httpOnly: true,
-  secure: env.STORE_ENV === "production",
+  secure: env.STORE_ENV !== "local",
   sameSite: "lax" as const,
   path: "/admin",
   maxAge: 5 * 60,

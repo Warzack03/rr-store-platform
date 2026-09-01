@@ -29,7 +29,7 @@
 
 `PaymentStatus`: `PAID`, `PARTIALLY_REFUNDED`, `REFUNDED`.
 
-`ShippingKind`: `HOME`, `PICKUP`.
+`ShippingKind`: `HOME` para todo pedido del MVP. Si el esquema conserva temporalmente `PICKUP` por una migración anterior, queda reservado y no debe utilizarse en UI, checkout ni nuevos pedidos.
 
 `EmailDeliveryStatus`: `PENDING`, `SENT`, `FAILED`.
 
@@ -155,13 +155,13 @@ Solo domicilio: `id`, `orderId` unique, `countryCode=ES`, `postalCode`, `provinc
 
 ## 24. `Shipment`
 
-`id`, `orderId` unique, `kind`, `carrier=SEUR`, `trackingNumber`, `trackingUrl`, snapshot Pickup (`externalId`, nombre, dirección, CP, ciudad, coordenadas), `shippedAt`, timestamps.
+`id`, `orderId` unique, `kind=HOME`, `carrier=SEUR`, `trackingNumber`, `trackingUrl`, `shippedAt`, timestamps.
 
 ## 25. `ShippingMethod`
 
 `id`, `kind` unique, `displayName`, `priceCents`, `isEnabled`, `sortOrder`, timestamps.
 
-Valores iniciales: HOME=499, PICKUP=349. Nunca hardcodear en lógica comercial.
+Valor inicial: HOME=499. Nunca hardcodear en lógica comercial.
 
 ## 26. `Payment`
 

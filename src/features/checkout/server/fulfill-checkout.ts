@@ -4,6 +4,7 @@ import Stripe from "stripe";
 
 import type { ValidatedCart } from "@/features/cart/validation-types";
 import { checkoutCanComplete } from "@/features/checkout/domain";
+import { sendOrderCreatedEmails } from "@/features/email/server/deliver-order-email";
 import { getPrismaClient } from "@/server/db/client";
 
 type ShippingSnapshot = {
@@ -31,7 +32,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session, e
   if (!paymentIntentId) throw new Error("payment-intent-missing");
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
           publicToken: attempt.publicToken,
@@ -59,7 +60,7 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session, e
         const item = await tx.orderItem.create({ data: { orderId: order.id, productId: line.productId, dropProductId: cart.cart.lines.find((candidate) => candidate.id === line.id)?.dropProductId ?? null, productTypeSnapshot: line.productType, productNameSnapshot: line.name, productSlugSnapshot: line.slug, sizeLabelSnapshot: line.sizeLabel, unitBasePriceCents: line.unitBasePriceCents, unitCustomizationCents: line.unitCustomizationCents, unitTotalCents: line.unitTotalCents, quantity: line.quantity, lineTotalCents: line.lineTotalCents } });
         for (const [sortOrder, customization] of line.customizations.entries()) await tx.orderItemCustomization.create({ data: { orderItemId: item.id, type: customization.type, labelSnapshot: customization.label, valueSnapshot: customization.value, surchargeCentsSnapshot: customization.surchargeCents, sortOrder } });
         for (const [sortOrder, component] of line.components.entries()) {
-          const savedComponent = await tx.orderItemComponent.create({ data: { orderItemId: item.id, componentLabelSnapshot: component.label, productNameSnapshot: component.productName, sizeLabelSnapshot: component.sizeLabel, sortOrder } });
+          const savedComponent = await tx.orderItemComponent.create({ data: { orderItemId: item.id, componentLabelSnapshot: component.label, productNameSnapshot: component.productName, sizeLabelSnapshot: component.sizeLabel, quantitySnapshot: component.quantity, sortOrder } });
           for (const [customSortOrder, customization] of component.customizations.entries()) await tx.orderItemCustomization.create({ data: { orderItemId: item.id, orderItemComponentId: savedComponent.id, type: customization.type, labelSnapshot: customization.label, valueSnapshot: customization.value, surchargeCentsSnapshot: customization.surchargeCents, sortOrder: customSortOrder } });
         }
       }
@@ -67,6 +68,8 @@ export async function fulfillCheckoutSession(session: Stripe.Checkout.Session, e
       await tx.checkoutAttempt.update({ where: { id: attempt.id }, data: { status: "PAID", paidAt: eventCreatedAt, stripePaymentIntentId: paymentIntentId } });
       return order;
     });
+    await sendOrderCreatedEmails(order.id);
+    return order;
   } catch (error) {
     const existing = await prisma.order.findUnique({ where: { checkoutAttemptId: attempt.id } });
     if (existing) return existing;

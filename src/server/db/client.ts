@@ -16,6 +16,7 @@ function createPrismaClient(): PrismaClient {
 
   const url = new URL(databaseUrl);
   const database = url.pathname.replace(/^\//, "");
+  const isLoopbackDatabase = url.hostname === "127.0.0.1" || url.hostname === "localhost";
 
   if (!url.hostname || !url.username || !database) {
     throw new Error("La configuración de la base de datos no es válida.");
@@ -27,6 +28,7 @@ function createPrismaClient(): PrismaClient {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database: decodeURIComponent(database),
+    allowPublicKeyRetrieval: isLoopbackDatabase,
     connectionLimit: 5,
     connectTimeout: 5_000,
     idleTimeout: 300,

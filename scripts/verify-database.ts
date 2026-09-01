@@ -94,11 +94,11 @@ async function verifySeed() {
 
   const methods = await prisma.shippingMethod.findMany({
     orderBy: { sortOrder: "asc" },
-    select: { kind: true, priceCents: true },
+    select: { kind: true, priceCents: true, isEnabled: true },
   });
   assert.deepEqual(methods, [
-    { kind: "HOME", priceCents: 499 },
-    { kind: "PICKUP", priceCents: 349 },
+    { kind: "HOME", priceCents: 499, isEnabled: true },
+    { kind: "PICKUP", priceCents: 349, isEnabled: false },
   ]);
 }
 

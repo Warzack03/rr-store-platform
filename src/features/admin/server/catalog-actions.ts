@@ -104,6 +104,8 @@ const allowedUploads = new Map([
   ["image/png", "png"],
   ["image/webp", "webp"],
 ]);
+const maximumImagePixels = 40_000_000;
+const maximumImageDimension = 8_000;
 
 export async function uploadMedia(formData: FormData) {
   const admin = await requireAdmin();
@@ -116,11 +118,16 @@ export async function uploadMedia(formData: FormData) {
   const detected = await fileTypeFromBuffer(buffer);
   const extension = detected ? allowedUploads.get(detected.mime) : null;
   if (!detected || !extension) redirect(messageUrl("/admin/medios", "error", "Solo se admiten JPG, PNG y WebP reales."));
-  const metadata = await sharp(buffer).metadata().catch(() => null);
+  const metadata = await sharp(buffer, { limitInputPixels: maximumImagePixels }).metadata().catch(() => null);
   if (!metadata) {
     redirect(messageUrl("/admin/medios", "error", "El archivo no es una imagen válida."));
   }
   if (!metadata.width || !metadata.height) redirect(messageUrl("/admin/medios", "error", "No se han podido leer las dimensiones."));
+  if (metadata.width > maximumImageDimension || metadata.height > maximumImageDimension || metadata.width * metadata.height > maximumImagePixels || (metadata.pages ?? 1) > 1) {
+    redirect(messageUrl("/admin/medios", "error", "La imagen tiene dimensiones excesivas o contiene animación."));
+  }
+  const altText = z.string().trim().max(255).nullable().safeParse(optionalText(formData.get("altText")));
+  if (!altText.success) redirect(messageUrl("/admin/medios", "error", "El texto alternativo es demasiado largo."));
   const now = new Date();
   const storageKey = `media/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${randomUUID()}.${extension}`;
   const mediaRoot = path.resolve(env.MEDIA_ROOT);
@@ -130,7 +137,8 @@ export async function uploadMedia(formData: FormData) {
   await writeFile(absolutePath, buffer, { flag: "wx" });
   const prisma = getPrismaClient();
   try {
-    const media = await prisma.mediaAsset.create({ data: { storageKey, originalName: file.name.slice(0, 255), mimeType: detected.mime, byteSize: BigInt(file.size), width: metadata.width, height: metadata.height, altText: optionalText(formData.get("altText")) } });
+    const originalName = path.basename(file.name).replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 255) || `imagen.${extension}`;
+    const media = await prisma.mediaAsset.create({ data: { storageKey, originalName, mimeType: detected.mime, byteSize: BigInt(file.size), width: metadata.width, height: metadata.height, altText: altText.data } });
     await prisma.auditLog.create({ data: auditData(admin.id, "MEDIA_UPLOADED", "MediaAsset", media.id, { originalName: media.originalName, mimeType: media.mimeType }) });
   } catch (error) {
     await unlink(absolutePath).catch(() => undefined);

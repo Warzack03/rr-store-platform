@@ -229,6 +229,7 @@ export async function validateCart(input: StoredCart): Promise<ValidatedCart> {
           label: component.label,
           productName: component.componentProduct.name,
           sizeLabel: size.size.label,
+          quantity: component.quantity,
           customizations: custom.snapshots,
         });
         selections.push(

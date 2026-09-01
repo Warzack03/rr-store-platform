@@ -13,7 +13,6 @@
 - Node.js.
 - Stripe SDK.
 - SMTP Hostinger.
-- API oficial SEUR Pickup server-side.
 - Playwright.
 
 Reutiliza la familia tecnológica existente de Rising Raimon y encaja con Hostinger sin infraestructura extra.
@@ -48,7 +47,6 @@ src/
     auth/
     db/
     stripe/
-    seur/
     email/
     media/
     security/
@@ -65,13 +63,13 @@ La nomenclatura puede ajustarse, manteniendo separación de responsabilidades.
 
 ## 4. Renderizado
 
-Server Components por defecto para home, catálogo, producto, legales y lecturas admin. Client Components solo para carrito, galería, countdown, personalizaciones, formularios, Pickup y controles interactivos.
+Server Components por defecto para home, catálogo, producto, legales y lecturas admin. Client Components solo para carrito, galería, countdown, personalizaciones, formularios y controles interactivos.
 
 No convertir layouts completos en client sin necesidad.
 
 ## 5. Dominio
 
-La UI no contiene reglas profundas. Encapsular casos de uso como obtener drops, validar carrito, calcular checkout, crear Stripe Checkout, crear pedido pagado, cambiar estados, aplicar cupón o buscar Pickup.
+La UI no contiene reglas profundas. Encapsular casos de uso como obtener drops, validar carrito, calcular checkout, crear Stripe Checkout, crear pedido pagado, cambiar estados o aplicar cupón.
 
 ## 6. Prisma/MySQL
 
@@ -97,13 +95,11 @@ Flujo: validar → CheckoutAttempt → Session → redirect → webhook → tran
 
 Reembolsos desde Stripe Dashboard; webhooks sincronizan estado.
 
-## 9. SEUR Pickup
+## 9. Operativa SEUR manual
 
-MVP solo busca, selecciona, valida y guarda snapshot de puntos. No crea expediciones ni etiquetas.
+El MVP no consume ninguna API de SEUR. Las expediciones, etiquetas, consultas de entrega e incidencias se gestionan manualmente en SEUR Pro fuera de la aplicación.
 
-Arquitectura: Browser → Next.js → SEUR. Credenciales solo en env.
-
-Aplicar timeout corto, fallback a domicilio, rate limit y reutilización de tokens/caché corta en memoria si aporta valor. Sin Redis.
+La aplicación solo guarda el número de seguimiento y la URL opcionales introducidos por el administrador, muestra el enlace al comprador y conserva los cambios de estado en el historial. Ante una entrega fallida, el comprador contacta por email y el administrador coordina la incidencia en SEUR Pro.
 
 ## 10. Medios
 
@@ -133,7 +129,7 @@ No registro, forgot password por email, invitaciones ni roles complejos.
 
 - Zod server-side.
 - CSRF/origin adecuado.
-- Rate limit login/2FA/checkout/Pickup.
+- Rate limit login/2FA/checkout.
 - CSP.
 - HSTS en producción.
 - protección contra framing.
@@ -171,7 +167,7 @@ Local: MySQL dev, Stripe test, media local.
 
 Beta `tienda-beta.risingraimon.es`: BBDD propia, secrets propios, Stripe test, media propia, acceso protegido y noindex.
 
-Producción `tienda.risingraimon.es`: BBDD propia, Stripe live, SMTP real, SEUR real y media propia.
+Producción `tienda.risingraimon.es`: BBDD propia, Stripe live, SMTP real, operativa manual mediante SEUR Pro y media propia.
 
 Nunca compartir BBDD beta/prod.
 

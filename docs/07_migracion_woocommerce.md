@@ -83,7 +83,7 @@ En `tienda-beta.risingraimon.es`:
 - configurar drop;
 - Stripe test;
 - SMTP beta;
-- Pickup;
+- seguimiento manual de envíos;
 - responsive;
 - noindex;
 - E2E.
@@ -108,7 +108,7 @@ Guardar MySQL y media.
 
 ### Paso 4 — Validación
 
-Comprobar productos, precios, drops, cupones, envíos, Stripe, email y SEUR.
+Comprobar productos, precios, drops, cupones, entrega a domicilio, Stripe, email y seguimiento manual con SEUR Pro.
 
 ### Paso 5 — Dominio
 

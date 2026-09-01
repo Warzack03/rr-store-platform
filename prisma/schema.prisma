@@ -403,6 +403,7 @@ model Order {
   lastName            String               @db.VarChar(150)
   phone               String               @db.VarChar(30)
   notes               String?              @db.Text
+  internalNotes       String?              @db.Text
   currency            String               @default("EUR") @db.Char(3)
   subtotalCents       Int                  @db.UnsignedInt
   discountCents       Int                  @default(0) @db.UnsignedInt
@@ -457,14 +458,15 @@ model OrderItem {
 }
 
 model OrderItemComponent {
-  id                  String                   @id @default(cuid()) @db.VarChar(30)
-  orderItemId         String                   @db.VarChar(30)
-  componentLabelSnapshot String                @db.VarChar(100)
-  productNameSnapshot String                   @db.VarChar(191)
-  sizeLabelSnapshot   String                   @db.VarChar(50)
-  sortOrder           Int                      @default(0)
-  orderItem           OrderItem                @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
-  customizations      OrderItemCustomization[]
+  id                     String                   @id @default(cuid()) @db.VarChar(30)
+  orderItemId            String                   @db.VarChar(30)
+  componentLabelSnapshot String                   @db.VarChar(100)
+  productNameSnapshot    String                   @db.VarChar(191)
+  sizeLabelSnapshot      String                   @db.VarChar(50)
+  quantitySnapshot       Int                      @default(1) @db.UnsignedSmallInt
+  sortOrder              Int                      @default(0)
+  orderItem              OrderItem                @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  customizations         OrderItemCustomization[]
 
   @@index([orderItemId, sortOrder])
 }
@@ -621,6 +623,7 @@ model EmailDelivery {
   updatedAt        DateTime            @updatedAt @db.DateTime(3)
   order            Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
 
+  @@unique([orderId, type, recipient])
   @@index([status, createdAt])
   @@index([orderId, type])
 }

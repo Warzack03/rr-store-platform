@@ -1,9 +1,10 @@
-import { isIP } from "node:net";
+import { createConnection, isIP } from "node:net";
 
 const diagnosticVersion = 3;
 const diagnosticUrl = "https://api.ipify.org?format=json";
 const diagnosticTimeoutMs = 3_000;
 const diagnosticLogPrefix = "[node-egress-ip-diagnostic]";
+const tcpDiagnosticTimeoutMs = 3_000;
 
 export type EgressIpDiagnosticResult =
   | {
@@ -23,6 +24,58 @@ type DiagnosticOptions = {
   log?: (prefix: string, result: { diagnosticVersion: number } & EgressIpDiagnosticResult) => void;
   now?: () => number;
 };
+
+type TcpEgressResult = {
+  status: "TCP_OK" | "TCP_ERROR" | "TCP_SKIPPED";
+  localIp?: string;
+  remoteHost?: string;
+  remotePort?: number;
+  code?: "TIMEOUT" | "CONNECT_ERROR" | "INVALID_DATABASE_URL";
+  durationMs: number;
+};
+
+async function probeMysqlTcpEgress(): Promise<TcpEgressResult> {
+  const startedAt = Date.now();
+  const rawUrl = process.env.DATABASE_URL;
+  if (!rawUrl) {
+    return { status: "TCP_SKIPPED", code: "INVALID_DATABASE_URL", durationMs: 0 };
+  }
+
+  let databaseUrl: URL;
+  try {
+    databaseUrl = new URL(rawUrl);
+  } catch {
+    return { status: "TCP_SKIPPED", code: "INVALID_DATABASE_URL", durationMs: Date.now() - startedAt };
+  }
+
+  const host = databaseUrl.hostname;
+  const port = Number(databaseUrl.port || 3306);
+  if (!host || !Number.isInteger(port) || port < 1 || port > 65535) {
+    return { status: "TCP_SKIPPED", code: "INVALID_DATABASE_URL", durationMs: Date.now() - startedAt };
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const socket = createConnection({ host, port });
+    const finish = (result: TcpEgressResult) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      socket.destroy();
+      resolve(result);
+    };
+    const timeout = setTimeout(() =>
+      finish({ status: "TCP_ERROR", remoteHost: host, remotePort: port, code: "TIMEOUT", durationMs: Date.now() - startedAt }),
+      tcpDiagnosticTimeoutMs,
+    );
+    socket.once("connect", () =>
+      finish({ status: "TCP_OK", localIp: socket.localAddress, remoteHost: host, remotePort: port, durationMs: Date.now() - startedAt }),
+    );
+    socket.once("error", () =>
+      finish({ status: "TCP_ERROR", localIp: socket.localAddress, remoteHost: host, remotePort: port, code: "CONNECT_ERROR", durationMs: Date.now() - startedAt }),
+    );
+  });
+}
 
 function getFailureCode(error: unknown) {
   if (error instanceof Error && error.name === "AbortError") {
@@ -99,6 +152,7 @@ export async function logNodeEgressIpDiagnostic(
   (options.log ?? console.info)(diagnosticLogPrefix, {
     diagnosticVersion,
     ...result,
+    mysqlTcp: await probeMysqlTcpEgress(),
   });
   return result;
 }

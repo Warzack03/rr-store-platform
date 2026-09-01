@@ -244,7 +244,10 @@ lanzamiento mientras la variable siga activada.
 - Rama de despliegue: `main`.
 - `STORE_ENV=production` y `SITE_URL=https://tienda.risingraimon.es`.
 - Base de datos y `MEDIA_ROOT` exclusivos de producción.
-- En cada release se ejecuta `npm run db:migrate:deploy` antes del arranque.
+- `npm run build` ejecuta automaticamente un hook `prebuild` en beta/produccion:
+  aplica `npm run db:migrate:deploy`, ejecuta `npm run db:seed` y despues compila.
+  Ambos pasos son idempotentes y garantizan la configuracion estructural y que
+  Pickup siga desactivado. En local el hook no toca la base de datos.
 - Después de las migraciones se ejecuta `npm run db:seed`; es idempotente y
   garantiza la configuración estructural y que Pickup siga desactivado.
 - Comando de build: `npm ci && npm run build`.

@@ -105,6 +105,12 @@ del administrador. Cambiar `AUTH_SECRET` después de activar TOTP invalida las
 sesiones y hace ilegible el secreto TOTP cifrado; su custodia forma parte del
 backup de configuración.
 
+Si MySQL exige autorizar la IP pública de salida de Node.js, activar únicamente
+durante el diagnóstico `DB_IP_DIAGNOSTIC=true`, redesplegar y enviar un login admin
+con formato válido. El log `[node-egress-ip-diagnostic]` muestra `sourceIp` cuando
+la consulta tiene éxito. Tras actualizar la allowlist, volver a `false` y
+redesplegar. El preflight no permite abrir producción con el diagnóstico activo.
+
 ## 6. Stripe live controlado
 
 En Stripe Dashboard, modo live:

@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/features/catalog/domain.test.ts src/features/cart/domain.test.ts src/features/checkout/domain.test.ts src/features/orders/domain.test.ts src/features/email/domain.test.ts src/features/settings/redirect-domain.test.ts src/features/admin/auth/rate-limit.test.ts src/features/release/readiness.test.ts",
+    "test": "tsx --test src/features/catalog/domain.test.ts src/features/cart/domain.test.ts src/features/checkout/domain.test.ts src/features/orders/domain.test.ts src/features/email/domain.test.ts src/features/settings/redirect-domain.test.ts src/features/admin/auth/rate-limit.test.ts src/features/release/readiness.test.ts src/server/db/egress-ip-diagnostic.test.ts",
     "test:e2e": "tsx scripts/run-playwright.ts",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",

@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { signIn, signOut } from "@/auth";
 import { getPrismaClient } from "@/server/db/client";
+import { logNodeEgressIpDiagnostic } from "@/server/db/egress-ip-diagnostic";
 
 import {
   authChallengeCookie,
@@ -62,6 +63,7 @@ export async function beginAdminLogin(
     };
   }
 
+  await logNodeEgressIpDiagnostic();
   const prisma = getPrismaClient();
   const admin = await prisma.adminUser.findUnique({
     where: { email: parsed.data.email },

@@ -236,6 +236,16 @@ export function checkReleaseEnvironment({
     );
   }
 
+  if (values.DB_IP_DIAGNOSTIC === "true") {
+    findings.push(
+      finding(
+        "db-ip-diagnostic",
+        "blocker",
+        "DB_IP_DIAGNOSTIC sigue activo; apágalo y vuelve a desplegar antes de abrir la tienda.",
+      ),
+    );
+  }
+
   return findings;
 }
 

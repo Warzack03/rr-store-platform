@@ -196,6 +196,7 @@ Este modo sirve como diagnóstico y no sustituye el preflight completo.
 | `SITE_URL` | Sí en deploy | Origen canónico del entorno. |
 | `AUTH_SECRET` | Sí | Secreto aleatorio de 32 caracteres o más para sesiones y cifrado; distinto por entorno. |
 | `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación; pool máximo de 5 conexiones. |
+| `DB_IP_DIAGNOSTIC` | Solo diagnóstico temporal | Con `true`, registra la IP pública de salida de Node.js al intentar un login admin válido. Debe volver a `false`. |
 | `SHADOW_DATABASE_URL` | En migraciones dev | Base vacía y distinta usada por Prisma Migrate. |
 | `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy. |
 | `GOOGLE_SITE_VERIFICATION` | Opcional en producciÃ³n | Token HTML facilitado por Google Search Console. |
@@ -213,6 +214,22 @@ Este modo sirve como diagnóstico y no sustituye el preflight completo.
 
 No se guardan valores reales en Git. Local, beta y producción usan bases de datos,
 secretos y raíces de medios distintas.
+
+### Diagnóstico temporal de IP de salida
+
+Si MySQL rechaza la conexión porque falta autorizar la IP pública de Node.js:
+
+1. configura temporalmente `DB_IP_DIAGNOSTIC=true` en Hostinger y redespliega;
+2. envía un único login admin con email y contraseña en formato válido;
+3. busca en los logs `[node-egress-ip-diagnostic]` y el estado `IP_OK`;
+4. añade `sourceIp` a la allowlist de MySQL y reintenta;
+5. configura `DB_IP_DIAGNOSTIC=false` y vuelve a desplegar.
+
+El diagnóstico tiene un timeout de tres segundos y nunca registra credenciales,
+la URL de MySQL ni consultas. La IP obtenida es la salida HTTP pública observada
+por el servicio externo; si el proveedor enruta MySQL por otra salida, debe
+confirmarse con la información de conexión de Hostinger. El preflight bloquea el
+lanzamiento mientras la variable siga activada.
 
 ## Beta
 

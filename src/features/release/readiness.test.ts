@@ -90,3 +90,13 @@ test("impide conservar las credenciales de alta inicial", () => {
 
   assert.ok(findings.some(({ code, level }) => code === "initial-admin-values" && level === "blocker"));
 });
+
+test("impide lanzar producción con el diagnóstico de IP activo", () => {
+  const findings = checkReleaseEnvironment({
+    values: { ...validProduction, DB_IP_DIAGNOSTIC: "true" },
+    target: "production",
+    workspaceRoot: "/home/store/app",
+  });
+
+  assert.ok(findings.some(({ code, level }) => code === "db-ip-diagnostic" && level === "blocker"));
+});

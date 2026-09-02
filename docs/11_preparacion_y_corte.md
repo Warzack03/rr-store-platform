@@ -180,10 +180,9 @@ No se considera válido un backup que nunca se ha restaurado.
 2. Confirmar cero bloqueos en beta y producción con `release:check`.
 3. Tomar backups finales de WooCommerce, MySQL nueva, media y configuración.
 4. Anotar el commit desplegado y el valor DNS anterior para rollback.
-5. Aplicar migraciones y seed en producción; arrancar y comprobar health. En
-   Hostinger el preset Next.js puede conservar el comando fijo `npm run build`:
-   el hook `prebuild` del repositorio ejecuta migraciones y seed automáticamente
-   en beta/producción antes de compilar.
+5. Cuando haya cambios de esquema, ejecutar manualmente las migraciones y el
+   seed en producción; arrancar y comprobar health. El comando normal de
+   Hostinger puede ser únicamente `npm run build`.
 6. Ejecutar la compra live controlada y su reembolso si todavía no se hizo.
 7. Cambiar `tienda.risingraimon.es` a la nueva aplicación y verificar SSL.
 8. Ejecutar `smoke` de producción y el flujo manual de comprador/admin.

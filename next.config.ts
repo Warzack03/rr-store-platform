@@ -51,6 +51,7 @@ const nextConfig: NextConfig = {
   agentRules: false,
   allowedDevOrigins: ["192.168.0.14"],
   experimental: {
+    cpus: 2,
     serverActions: {
       bodySizeLimit: "9mb",
     },

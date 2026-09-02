@@ -7,6 +7,11 @@ const globalDatabase = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+function getConnectionLimit() {
+  const configured = Number(process.env.DB_CONNECTION_LIMIT ?? "2");
+  return Number.isInteger(configured) && configured >= 1 && configured <= 5 ? configured : 2;
+}
+
 function createPrismaClient(): PrismaClient {
   const databaseUrl = getDatabaseUrl();
 
@@ -29,7 +34,7 @@ function createPrismaClient(): PrismaClient {
     password: decodeURIComponent(url.password),
     database: decodeURIComponent(database),
     allowPublicKeyRetrieval: isLoopbackDatabase,
-    connectionLimit: 5,
+    connectionLimit: getConnectionLimit(),
     connectTimeout: 5_000,
     idleTimeout: 300,
   });

@@ -195,7 +195,8 @@ Este modo sirve como diagnóstico y no sustituye el preflight completo.
 | `STORE_ENV` | Sí en deploy | `local`, `beta` o `production`. Beta y local no se indexan. |
 | `SITE_URL` | Sí en deploy | Origen canónico del entorno. |
 | `AUTH_SECRET` | Sí | Secreto aleatorio de 32 caracteres o más para sesiones y cifrado; distinto por entorno. |
-| `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación; pool máximo de 5 conexiones. |
+| `DATABASE_URL` | Para BBDD | URL MySQL/MariaDB de la aplicación. |
+| `DB_CONNECTION_LIMIT` | Opcional | Conexiones máximas del pool de Prisma por proceso (1–5; por defecto 2). |
 | `DB_IP_DIAGNOSTIC` | Solo diagnóstico temporal | Con `true`, registra la IP pública de salida de Node.js al intentar un login admin válido. Debe volver a `false`. |
 | `SHADOW_DATABASE_URL` | En migraciones dev | Base vacía y distinta usada por Prisma Migrate. |
 | `MEDIA_ROOT` | Antes de medios | Directorio persistente externo al deploy. |

@@ -120,6 +120,15 @@ function emailShell(storeName: string, content: string, supportEmail: string) {
   return `<!doctype html><html lang="es"><body style="margin:0;background:#07101d;font-family:Arial,sans-serif;color:#10233e"><div style="max-width:640px;margin:0 auto;padding:28px 16px"><div style="padding:18px 22px;background:#0b1b31;color:#ffd46f;font-size:22px;font-weight:800">${escapeHtml(storeName)}</div><div style="padding:24px 22px;background:#fff">${content}<p style="margin-top:26px;color:#526174;font-size:13px">¿Necesitas ayuda? Responde a este correo o escríbenos a <a href="mailto:${escapeHtml(supportEmail)}" style="color:#9a6f00">${escapeHtml(supportEmail)}</a>.</p></div></div></body></html>`;
 }
 
+function hideCustomerOrderNumber(rendered: RenderedEmail, orderNumber: number): RenderedEmail {
+  const marker = `#${orderNumber}`;
+  return {
+    subject: rendered.subject.replaceAll(marker, ""),
+    text: rendered.text.replaceAll(marker, ""),
+    html: rendered.html.replaceAll(marker, ""),
+  };
+}
+
 export function renderOrderEmail(
   type: OrderEmailType,
   order: EmailOrder,
@@ -141,7 +150,7 @@ export function renderOrderEmail(
     const subject = `Tu pedido #${order.number} ha sido enviado`;
     const text = `${greeting}\n\nTu pedido ya va de camino.${trackingText}${trackingUrl ? `\nSeguimiento: ${trackingUrl}` : ""}\n\nConsulta tu pedido: ${privateUrl}\n\nSi la entrega no ha podido completarse, contacta con ${settings.supportEmail}.`;
     const content = `<h1 style="margin-top:0">Tu pedido va de camino</h1><p>${escapeHtml(greeting)}</p><p>Hemos marcado el pedido <strong>#${escapeHtml(order.number)}</strong> como enviado.</p>${order.shipment?.trackingNumber ? `<p>Número de seguimiento: <strong>${escapeHtml(order.shipment.trackingNumber)}</strong></p>` : ""}${trackingUrl ? `<p><a href="${escapeHtml(trackingUrl)}" style="display:inline-block;padding:12px 18px;background:#ffd46f;color:#07101d;font-weight:700;text-decoration:none">Ver seguimiento</a></p>` : ""}<p><a href="${escapeHtml(privateUrl)}">Consultar mi pedido</a></p><p style="color:#526174">Si la entrega no ha podido completarse, escríbenos y la gestionaremos con SEUR.</p>`;
-    return { subject, text, html: emailShell(settings.storeName, content, settings.supportEmail) };
+    return hideCustomerOrderNumber({ subject, text, html: emailShell(settings.storeName, content, settings.supportEmail) }, order.number);
   }
   if (type === "ORDER_CANCELLED_OR_REFUNDED") {
     const hasRefund = order.payment?.status === "REFUNDED" || order.payment?.status === "PARTIALLY_REFUNDED";
@@ -149,12 +158,12 @@ export function renderOrderEmail(
     const detail = order.payment?.status === "REFUNDED" ? "El pago figura como reembolsado." : order.payment?.status === "PARTIALLY_REFUNDED" ? "Se ha registrado un reembolso parcial." : "El pedido figura como cancelado.";
     const text = `${greeting}\n\n${detail}\n\nConsulta tu pedido: ${privateUrl}\n\nSi tienes cualquier duda, contacta con ${settings.supportEmail}.`;
     const content = `<h1 style="margin-top:0">Actualización de tu pedido</h1><p>${escapeHtml(greeting)}</p><p>${escapeHtml(detail)}</p><p>Los reembolsos pueden tardar unos días en aparecer según el método de pago.</p><p><a href="${escapeHtml(privateUrl)}">Consultar mi pedido</a></p>`;
-    return { subject, text, html: emailShell(settings.storeName, content, settings.supportEmail) };
+    return hideCustomerOrderNumber({ subject, text, html: emailShell(settings.storeName, content, settings.supportEmail) }, order.number);
   }
   const address = order.address ? `${order.address.street}, ${order.address.streetNumber}${order.address.additionalLine ? `, ${order.address.additionalLine}` : ""}\n${order.address.postalCode} ${order.address.city}, ${order.address.province}` : "";
   const subject = `Pedido #${order.number} recibido`;
   const text = `${greeting}\n\nHemos recibido tu pedido y confirmado el pago.\n\n${itemText(order)}\n\n${totalsText(order)}${address ? `\n\nEntrega a domicilio:\n${address}` : ""}\n\n${settings.deliveryEstimateText}\n\nConsulta tu pedido: ${privateUrl}`;
   const addressHtml = order.address ? `<div style="margin-top:18px"><strong>Entrega a domicilio</strong><br>${escapeHtml(order.address.street)}, ${escapeHtml(order.address.streetNumber)}${order.address.additionalLine ? `<br>${escapeHtml(order.address.additionalLine)}` : ""}<br>${escapeHtml(order.address.postalCode)} ${escapeHtml(order.address.city)}, ${escapeHtml(order.address.province)}</div>` : "";
   const content = `<h1 style="margin-top:0">Pedido #${escapeHtml(order.number)} recibido</h1><p>${escapeHtml(greeting)}</p><p>Hemos recibido tu pedido y confirmado el pago.</p>${itemHtml(order)}${totalsHtml(order)}${addressHtml}<p>${escapeHtml(settings.deliveryEstimateText)}</p><p><a href="${escapeHtml(privateUrl)}" style="display:inline-block;padding:12px 18px;background:#ffd46f;color:#07101d;font-weight:700;text-decoration:none">Consultar mi pedido</a></p>`;
-  return { subject, text, html: emailShell(settings.storeName, content, settings.supportEmail) };
+  return hideCustomerOrderNumber({ subject, text, html: emailShell(settings.storeName, content, settings.supportEmail) }, order.number);
 }

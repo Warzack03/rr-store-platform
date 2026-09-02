@@ -24,7 +24,9 @@ const settings = { storeName: "Rising Raimon", supportEmail: "soporte@example.co
 
 test("el correo recibido contiene pedido, productos, envío, total y enlace privado", () => {
   const result = renderOrderEmail("ORDER_RECEIVED", order, settings, "https://tienda.example.com/");
-  assert.match(result.subject, /#7/);
+  assert.doesNotMatch(result.subject, /#7/);
+  assert.doesNotMatch(result.text, /#7/);
+  assert.doesNotMatch(result.html, /#7/);
   assert.match(result.text, /Camiseta/);
   assert.match(result.text, /6\.479|64,79/);
   assert.match(result.text, /pedido\/token-privado-largo/);
